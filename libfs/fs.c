@@ -90,9 +90,10 @@ int fs_umount(void)
 	block_write(super.root_dir_index, fat);
 	for(int i = 1; i < super.num_blocks_fat; i++) 
 	{
-		if(block_write(i+1, &fat[i*(BLOCK_SIZE/2)])){
+		if(block_write(i+1, &fat[i*(BLOCK_SIZE/2)]))
+		{
 			return ERROR;
-	}
+		}
 	}
 	return SUCCE;
 }
@@ -100,6 +101,18 @@ int fs_umount(void)
 int fs_info(void)
 {
 	/* TODO: Phase 1 */
+	if (!block_disk_is_open()) 
+	{
+        return ERROR;
+    }
+	printf("Currently Mounted File System Information:\n");
+    printf("  Signature: %s\n", super.signature);
+    printf("  Total blocks: %u\n", super.total_blocks);
+    printf("  Root Directory Index: %u\n", super.root_dir_index);
+    printf("  Data Block Start Index: %u\n", super.data_block_start_index);
+    printf("  Number of Fat Blocks: %u\n", super.num_blocks_fat);
+    printf("  Number of Data Blocks: %u\n", super.amount_data_blocks);
+	return SUCCE;
 }
 
 int fs_create(const char *filename)
@@ -146,4 +159,3 @@ int fs_read(int fd, void *buf, size_t count)
 {
 	/* TODO: Phase 4 */
 }
-
