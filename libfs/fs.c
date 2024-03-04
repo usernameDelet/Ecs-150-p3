@@ -118,6 +118,35 @@ int fs_info(void)
 int fs_create(const char *filename)
 {
 	/* TODO: Phase 2 */
+	if(filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
+	{
+		return ERROR;
+	}
+	for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
+	{
+        if (strcmp(rootDir[i].filename, filename) == 0) 
+		{
+            return ERROR; 
+        }
+    }
+	int empty_entry = ERROR;
+    for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
+	{
+        if (rootDir[i].filename[0] == '\0') 
+		{
+            empty_entry = i;
+            break;
+        }
+    }
+	if (empty_entry == ERROR) 
+	{
+        return ERROR;
+    }
+	memcpy(rootDir[empty_entry].filename, filename, FS_FILENAME_LEN);
+	rootDir[empty_entry].size_of_file = 0; 
+    rootDir[empty_entry].index_of_first = FAT_EOC; 
+	return SUCCE;
+
 }
 
 int fs_delete(const char *filename)
