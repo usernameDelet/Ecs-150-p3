@@ -10,6 +10,8 @@
 #define ERROR -1
 #define SUCCE 0
 
+#define FAT_EOC 0xFFFF
+
 /* TODO: Phase 1 */
 struct superblock 
 {
