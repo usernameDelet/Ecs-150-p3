@@ -28,7 +28,6 @@ struct rootDirectory
 	uint32_t    size_of_file;
 	uint16_t 	index_of_first;
 	uint8_t 	unused[10];
-
 };
 
 struct superblock super;
@@ -36,39 +35,43 @@ struct rootDirectory rootDir[FS_FILE_MAX_COUNT];
 int fs_mount(const char *diskname)
 {
 	/* TODO: Phase 1 */
+	struct root_dir *read = malloc(sizeof(struct rootDirectory) * FS_FILE_MAX_COUNT);
+	uint16_t *fat = malloc(BLOCK_SIZE *(super.num_blocks_fat)* 2);
 	if(block_disk_open(diskname) == ERROR)
 	{
 		return ERROR;
 	}
 	if(strcmp(super.signature, "ECS150FS") != 0)
 	{
+		block_disk_close();
 		return ERROR;
 	}
-	if(block_read(0,&super) == ERROR)
+	if(block_read(0, &super) == ERROR)
 	{
+		block_disk_close();
 		return ERROR;
 	}
-	if(super.total_blocks != block_disk_count)
+	if(super.total_blocks != block_disk_count())
 	{
+		block_disk_close();
 		return ERROR;
 	}
-	struct root_dir *read = malloc(sizeof(struct rootDirectory) * FS_FILE_MAX_COUNT);
 	if (read == NULL) 
 	{
+		block_disk_close();
 		return ERROR;
 	}
 	if (block_read(super.root_dir_index, read) == ERROR) 
 	{
+		block_disk_close();
 		return ERROR;
     }
-	uint16_t *fat = malloc(BLOCK_SIZE *(super.num_blocks_fat)* 2);
 	for(int i = 1; i < super.num_blocks_fat; i++) 
 	{
-		if(block_read(i+1, &fat[i*BLOCK_SIZE/2])){
+		if(block_read(i+1, &fat[i*BLOCK_SIZE/2]))
+		{
 			return ERROR;
-	}
-
-	
+		}
 	}
 	return SUCCE;
 }
