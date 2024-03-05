@@ -191,6 +191,26 @@ int fs_delete(const char *filename)
 int fs_ls(void)
 {
 	/* TODO: Phase 2 */
+	if(block_disk_count == ERROR) 
+	{
+		return ERROR;
+	}
+	printf("FS Ls:\n");
+    for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
+    {
+        if (rootDir[i].filename[0] != '\0') 
+        {
+            printf("File: %s, Size: %u, Blocks: ", rootDir[i].filename, rootDir[i].size_of_file);
+            uint16_t current_block = rootDir[i].index_of_first;
+            while (current_block != FAT_EOC) 
+            {
+                printf("%u ", current_block);
+                current_block = fat[current_block];
+            }
+            printf("\n");
+        }
+    }
+    return SUCCE;
 }
 
 int fs_open(const char *filename)
