@@ -215,8 +215,47 @@ int fs_ls(void)
 
 int fs_open(const char *filename)
 {
-	/* TODO: Phase 3 */
+    if (filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
+    {
+        return ERROR;
+    }
+
+    int index = ERROR;
+    for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
+    {
+        if (strcmp(rootDir[i].filename, filename) == 0) 
+        {
+            index = i;
+            break;
+        }
+    }
+
+    if (index == ERROR) 
+    {
+        return ERROR; 
+    }
+
+    int new_fd_index = ERROR;
+    for (int i = 0; i < FS_OPEN_MAX_COUNT; i++)
+    {
+        if (fd[i].file_index == ERROR)
+        {
+            new_fd_index = i;
+            break;
+        }
+    }
+
+    if (new_fd_index != ERROR)
+    {
+        strcpy(fd[new_fd_index].filename, filename);
+        fd[new_fd_index].offset = 0;
+        fd[new_fd_index].file_index = index;
+        return new_fd_index; 
+    }
+    
+    return ERROR; 
 }
+
 
 int fs_close(int fd)
 {
