@@ -32,6 +32,7 @@ struct rootDirectory
 	uint8_t 	unused[10];
 };
 
+uint16_t *fat;
 struct superblock super;
 struct rootDirectory rootDir[FS_FILE_MAX_COUNT];
 int fs_mount(const char *diskname)
@@ -88,7 +89,7 @@ int fs_umount(void)
 	{
         return ERROR;
     }
-	uint16_t *fat = malloc(BLOCK_SIZE *(super.num_blocks_fat)* 2);
+	fat = malloc(BLOCK_SIZE *(super.num_blocks_fat)* 2);
 	block_write(super.root_dir_index, fat);
 	for(int i = 1; i < super.num_blocks_fat; i++) 
 	{
@@ -154,6 +155,37 @@ int fs_create(const char *filename)
 int fs_delete(const char *filename)
 {
 	/* TODO: Phase 2 */
+	if (filename == NULL) 
+    {
+        return ERROR;
+    }
+    int file_index = ERROR;
+    for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
+    {
+        if (strcmp(rootDir[i].filename, filename) == 0) 
+        {
+            file_index = i;
+            break;
+        }
+    }
+    if (file_index == ERROR) 
+    {
+        return ERROR;
+    }
+
+    uint16_t current_block = rootDir[file_index].index_of_first;
+    while (current_block != FAT_EOC) 
+    {
+        uint16_t next_block = fat[current_block];
+        fat[current_block] = 0;
+        current_block = next_block;
+    }
+
+    rootDir[file_index].filename[0] = '\0';
+    rootDir[file_index].size_of_file = 0;
+    rootDir[file_index].index_of_first = FAT_EOC;
+
+    return SUCCE;
 }
 
 int fs_ls(void)
