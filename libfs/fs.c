@@ -282,6 +282,29 @@ int fs_close(int fd)
 int fs_stat(int fd)
 {
 	/* TODO: Phase 3 */
+	if (super.signature[0] == '\0')
+    {
+        return ERROR;
+    }
+    
+    if (fd < 0 || fd >= FS_OPEN_MAX_COUNT || filed[fd].file_index == ERROR)
+    {
+        return ERROR;
+    }
+
+    size_t block_count = block_disk_count();
+    if (block_count == ERROR)
+    {
+        return ERROR;
+    }
+
+    size_t file_block_count = (rootDir[filed[fd].file_index].size_of_file + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    if (file_block_count > block_count)
+    {
+        return ERROR;
+    }
+
+    return rootDir[filed[fd].file_index].size_of_file;
 }
 
 int fs_lseek(int fd, size_t offset)
