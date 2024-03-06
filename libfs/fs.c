@@ -35,11 +35,13 @@ struct rootDirectory
 uint16_t *fat;
 struct superblock super;
 struct rootDirectory rootDir[FS_FILE_MAX_COUNT];
+struct fileDescriptor fd[FS_OPEN_MAX_COUNT];
+
 int fs_mount(const char *diskname)
 {
 	/* TODO: Phase 1 */
-	struct root_dir *read = malloc(sizeof(struct rootDirectory) * FS_FILE_MAX_COUNT);
-	uint16_t *fat = malloc(BLOCK_SIZE *(super.num_blocks_fat)* 2);
+	struct root_dir *rootDir = malloc(sizeof(struct rootDirectory) * FS_FILE_MAX_COUNT);
+	fat = malloc(BLOCK_SIZE *(super.num_blocks_fat)* 2);
 	if(block_disk_open(diskname) == ERROR)
 	{
 		return ERROR;
@@ -59,12 +61,12 @@ int fs_mount(const char *diskname)
 		block_disk_close();
 		return ERROR;
 	}
-	if (read == NULL) 
+	if (rootDir == NULL) 
 	{
 		block_disk_close();
 		return ERROR;
 	}
-	if (block_read(super.root_dir_index, read) == ERROR) 
+	if (block_read(super.root_dir_index, rootDir) == ERROR) 
 	{
 		block_disk_close();
 		return ERROR;
@@ -211,63 +213,13 @@ int fs_ls(void)
 
 int fs_open(const char *filename)
 {
-    if (filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
-    {
-        return ERROR;
-    }
-
-    int index = ERROR;
-    for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
-    {
-        if (strcmp(rootDir[i].filename, filename) == 0) 
-        {
-            index = i;
-            break;
-        }
-    }
-
-    if (index == ERROR) 
-    {
-        return ERROR; 
-    }
-
-    int new_fd_index = ERROR;
-    for (int i = 0; i < FS_OPEN_MAX_COUNT; i++)
-    {
-        if (fd[i].file_index == ERROR)
-        {
-            new_fd_index = i;
-            break;
-        }
-    }
-
-    if (new_fd_index != ERROR)
-    {
-        strcpy(fd[new_fd_index].filename, filename);
-        fd[new_fd_index].offset = 0;
-        fd[new_fd_index].file_index = index;
-        return new_fd_index; 
-    }
-    
-    return ERROR; 
+	/* TODO: Phase 3 */
 }
 
 
 int fs_close(int fd)
 {
 	/* TODO: Phase 3 */
-    if (fd > FS_OPEN_MAX_COUNT || fd < 0)
-    {
-        return ERROR;
-    }
-    if (fd[fd].file_index == ERROR) 
-    {
-        return ERROR;
-    }
-    fd[fd].filename[0] = '\0';
-    fd[fd].file_index = ERROR;
-    fd[fd].offset = 0;
-    return SUCCE;
 }
 
 
