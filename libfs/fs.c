@@ -104,10 +104,6 @@ int fs_umount(void)
 int fs_info(void)
 {
 	/* TODO: Phase 1 */
-	if (!block_disk_is_open()) 
-	{
-        return ERROR;
-    }
 	printf("Currently Mounted File System Information:\n");
     printf("  Signature: %s\n", super.signature);
     printf("  Total blocks: %u\n", super.total_blocks);
@@ -191,7 +187,7 @@ int fs_delete(const char *filename)
 int fs_ls(void)
 {
 	/* TODO: Phase 2 */
-	if(block_disk_count == ERROR) 
+	if(block_disk_count() == ERROR) 
 	{
 		return ERROR;
 	}
