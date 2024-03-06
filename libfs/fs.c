@@ -334,7 +334,7 @@ int fs_read(int fd, void *buf, size_t count)
 {
     if (fd < 0 || 
 		fd >= FS_OPEN_MAX_COUNT || 
-		filed[fd].file_index == ERROR ||
+		filed[fd].file_index == ERROR ||  
 		block_disk_count() == ERROR ||
 		buf == NULL )
     {
@@ -356,8 +356,15 @@ int fs_read(int fd, void *buf, size_t count)
         }
 
         // Calculate the number of bytes to read in the current block
-        size_t bytes_to_read = (count < BLOCK_SIZE - block_offset) ? count : (BLOCK_SIZE - block_offset);
-
+        size_t bytes_to_read;
+        if (count < BLOCK_SIZE - block_offset)
+        {
+            bytes_to_read = count;
+        }
+        else
+        {
+            bytes_to_read = BLOCK_SIZE - block_offset;
+        }
         // Copy data from the block
         memcpy(buf, block + block_offset, bytes_to_read);
 
@@ -373,4 +380,3 @@ int fs_read(int fd, void *buf, size_t count)
 
     return SUCCE;
 }
-
