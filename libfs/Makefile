@@ -2,7 +2,7 @@
 CC := gcc
 CFLAGS := -Wall -Werror -Wextra
 LIB := libfs.a
-OBJS := fs.o
+OBJS := fs.o disk.o
 all: $(lib)
 
 $(LIB): $(OBJS)
