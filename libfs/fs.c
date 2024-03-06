@@ -260,7 +260,20 @@ int fs_open(const char *filename)
 int fs_close(int fd)
 {
 	/* TODO: Phase 3 */
+    if (fd > FS_OPEN_MAX_COUNT || fd < 0)
+    {
+        return ERROR;
+    }
+    if (fd[fd].file_index == ERROR) 
+    {
+        return ERROR;
+    }
+    fd[fd].filename[0] = '\0';
+    fd[fd].file_index = ERROR;
+    fd[fd].offset = 0;
+    return SUCCE;
 }
+
 
 int fs_stat(int fd)
 {
