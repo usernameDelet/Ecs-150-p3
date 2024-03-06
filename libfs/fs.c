@@ -35,7 +35,6 @@ struct rootDirectory
 uint16_t *fat;
 struct superblock super;
 struct rootDirectory rootDir[FS_FILE_MAX_COUNT];
-struct fileDescriptor fd[FS_OPEN_MAX_COUNT];
 
 int fs_mount(const char *diskname)
 {
@@ -213,9 +212,7 @@ int fs_ls(void)
 
 int fs_open(const char *filename)
 {
-	/* TODO: Phase 3 */
 }
-
 
 int fs_close(int fd)
 {
