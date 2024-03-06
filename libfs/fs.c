@@ -292,13 +292,13 @@ int fs_stat(int fd)
         return ERROR;
     }
 
-    size_t block_count = block_disk_count();
+    int block_count = block_disk_count();
     if (block_count == ERROR)
     {
         return ERROR;
     }
 
-    size_t file_block_count = (rootDir[filed[fd].file_index].size_of_file + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    int file_block_count = (rootDir[filed[fd].file_index].size_of_file + BLOCK_SIZE - 1) / BLOCK_SIZE;
     if (file_block_count > block_count)
     {
         return ERROR;
