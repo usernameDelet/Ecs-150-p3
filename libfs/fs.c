@@ -332,5 +332,45 @@ int fs_write(int fd, void *buf, size_t count)
 
 int fs_read(int fd, void *buf, size_t count)
 {
-	/* TODO: Phase 4 */
+    if (fd < 0 || 
+		fd >= FS_OPEN_MAX_COUNT || 
+		filed[fd].file_index == ERROR ||
+		block_disk_count() == ERROR ||
+		buf == NULL )
+    {
+        return ERROR;
+    }
+
+    // Calculate the block index and offset within the block
+    uint16_t block_index = filed[fd].offset / BLOCK_SIZE;
+    uint16_t block_offset = filed[fd].offset % BLOCK_SIZE;
+
+    // Read data from the file
+    while (count > 0 && filed[fd].offset < rootDir[filed[fd].file_index].size_of_file)
+    {
+        // Read the block from disk
+        char block[BLOCK_SIZE];
+        if (block_read(fat[rootDir[filed[fd].file_index].index_of_first + block_index], block) == ERROR)
+        {
+            return ERROR;
+        }
+
+        // Calculate the number of bytes to read in the current block
+        size_t bytes_to_read = (count < BLOCK_SIZE - block_offset) ? count : (BLOCK_SIZE - block_offset);
+
+        // Copy data from the block
+        memcpy(buf, block + block_offset, bytes_to_read);
+
+        // Update file offset and counters
+        filed[fd].offset += bytes_to_read;
+        buf += bytes_to_read;
+        count -= bytes_to_read;
+
+        // Move to the next block
+        ++block_index;
+        block_offset = 0;
+    }
+
+    return SUCCE;
 }
+
