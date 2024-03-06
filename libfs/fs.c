@@ -32,10 +32,18 @@ struct rootDirectory
 	uint8_t 	unused[10];
 };
 
+struct file_descriptor
+{
+	char  filename[FS_FILENAME_LEN];
+	int   file_index;
+	int   offset;
+};
+
+
 uint16_t *fat;
 struct superblock super;
 struct rootDirectory rootDir[FS_FILE_MAX_COUNT];
-
+struct file_descriptor filed[FS_OPEN_MAX_COUNT];
 int fs_mount(const char *diskname)
 {
 	/* TODO: Phase 1 */
@@ -212,11 +220,62 @@ int fs_ls(void)
 
 int fs_open(const char *filename)
 {
+    if (filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
+    {
+        return ERROR;
+    }
+
+    int index = ERROR;
+    for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
+    {
+        if (strcmp(rootDir[i].filename, filename) == 0) 
+        {
+            index = i;
+            break;
+        }
+    }
+
+    if (index == ERROR) 
+    {
+        return ERROR; 
+    }
+
+    int new_fd_index = ERROR;
+    for (int i = 0; i < FS_OPEN_MAX_COUNT; i++)
+    {
+        if (filed[i].file_index == ERROR)
+        {
+            new_fd_index = i;
+            break;
+        }
+    }
+
+    if (new_fd_index != ERROR)
+    {
+        strcpy(filed[new_fd_index].filename, filename);
+        filed[new_fd_index].offset = 0;
+        filed[new_fd_index].file_index = index;
+        return new_fd_index; 
+    }
+    
+    return ERROR; 
 }
 
 int fs_close(int fd)
 {
 	/* TODO: Phase 3 */
+    if (fd >= FS_OPEN_MAX_COUNT || fd < 0)
+    {
+        return ERROR;
+    }
+    if (filed[fd].file_index == ERROR) 
+    {
+        return ERROR;
+    }
+    filed[fd].filename[0] = '\0';
+    filed[fd].file_index = ERROR;
+    filed[fd].offset = 0;
+    return SUCCE;
 }
 
 
@@ -227,7 +286,20 @@ int fs_stat(int fd)
 
 int fs_lseek(int fd, size_t offset)
 {
-	/* TODO: Phase 3 */
+    if (fd >= FS_OPEN_MAX_COUNT || fd < 0)
+    {
+        return ERROR;
+    }
+    if (filed[fd].file_index == ERROR) 
+    {
+        return ERROR;
+    }
+    if (offset > rootDir[filed[fd].file_index].size_of_file)
+    {
+        return ERROR;
+    }
+    filed[fd].offset = offset;
+    return SUCCE;
 }
 
 int fs_write(int fd, void *buf, size_t count)
