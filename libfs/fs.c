@@ -436,7 +436,7 @@ int fs_read(int fd, void *buf, size_t count)
     uint16_t block_offset = filed[fd].offset % BLOCK_SIZE;
 
     // Read data from the file
-    while (count > 0 && filed[fd].offset < rootDir[filed[fd].file_index].size_of_file)
+    while (count > 0 && (uint32_t)filed[fd].offset < rootDir[filed[fd].file_index].size_of_file)
     {
         // Read the block from disk
         char block[BLOCK_SIZE];
@@ -447,7 +447,7 @@ int fs_read(int fd, void *buf, size_t count)
 
         // Calculate the number of bytes to read in the current block
         size_t bytes_to_read;
-        if (count < BLOCK_SIZE - block_offset)
+        if (count < (size_t)(BLOCK_SIZE - block_offset))
         {
             bytes_to_read = count;
         }
