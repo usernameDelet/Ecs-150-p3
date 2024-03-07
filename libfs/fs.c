@@ -105,17 +105,27 @@ int fs_umount(void)
 }
 
 int get_free(){
-    int fat_free = 0;
+    int fat_free_new = 0;
     for (int i = 0; i < super.amount_data_blocks; i++)
     {
         if (fat[i] == 0) 
         {
-            fat_free++;
+            fat_free_new++;
         }
     }
-    return fat_free;
+    return fat_free_new;
 }
-
+int get_count(){
+    int rdirCount_new = 0;
+    for(int i = 0; i < FS_FILE_MAX_COUNT; i++)
+    {
+        if(strcmp(rootDir[i].filename, "\0") == 0)
+        {
+            rdirCount_new = rdirCount_new + 1;
+        }
+    }
+    return rdirCount_new;
+}
 int fs_info(void)
 {
     /* TODO: Phase 1 */
@@ -133,18 +143,11 @@ int fs_info(void)
     printf("data_blk_count=%u\n", super.amount_data_blocks);
     printf("fat_free_ratio=%u/%u\n", super.amount_data_blocks - super.num_blocks_fat, super.amount_data_blocks);
 
-    int rdirCount = 0;
-    for(int i = 0; i < FS_FILE_MAX_COUNT; i++)
-    {
-        if(strcmp(rootDir[i].filename, "\0") == 0)
-        {
-            rdirCount = rdirCount + 1;
-        }
-    }
     int fat_free = get_free();
+    int rdirCount = get_count();
     printf("fat_free_ratio=%d/%d\n",fat_free, super.amount_data_blocks);
     printf("rdir_free_ratio=%d/%d\n", rdirCount, FS_FILE_MAX_COUNT);
-    return SUCCE;
+	return SUCCE;
 }
 
 
