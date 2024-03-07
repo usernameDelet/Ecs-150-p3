@@ -137,7 +137,7 @@ int fs_info(void)
     }
     printf("rdir_free_ratio=%d/%d\n", rdir_free_entries, FS_FILE_MAX_COUNT);
 
-    return SUCCESS;
+    return SUCCE;
 }
 
 int fs_create(const char *filename)
