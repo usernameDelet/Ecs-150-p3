@@ -88,26 +88,26 @@ int fs_mount(const char *diskname)
 
 int fs_umount(void)
 {
-	/* TODO: Phase 1 */
-    	printf("hello 2");
-	if(block_disk_count() == ERROR)
-	{
-		return ERROR;
-	}
-	if(block_disk_close() == ERROR)
-	{
+    printf("hello 2");
+    if(block_disk_count() == ERROR)
+    {
         return ERROR;
-    	}
-	block_write(super.root_dir_index, fat);
-	for(int i = 1; i < super.num_blocks_fat; i++) 
-	{
-		if(block_write(i+1, &fat[i*(BLOCK_SIZE/2)]))
-		{
-			return ERROR;
-		}
-	}
-    	free(fat);
-	return SUCCE;
+    }
+    if(block_disk_close() == ERROR)
+    {
+        return ERROR;
+    }
+ 
+    block_write(super.root_dir_index, fat);
+    
+
+    if(block_write(super.root_dir_index, (void *)rootDir) == ERROR)
+    {
+        return ERROR;
+    }
+    
+    free(fat);
+    return SUCCE;
 }
 
 int get_free(){
