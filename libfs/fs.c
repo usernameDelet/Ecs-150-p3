@@ -121,26 +121,17 @@ int fs_info(void)
     printf("data_blk_count=%u\n", super.amount_data_blocks);
     printf("fat_free_ratio=%u/%u\n", super.amount_data_blocks - super.num_blocks_fat, super.amount_data_blocks);
 
-    int fat_free_blocks = 0;
-    for (int i = 0; i < super.amount_data_blocks; i++) {
-        if (fat[i] == 0) {
-            fat_free_blocks++;
-        }
-    }
-
-    printf("fat_free_ratio=%d/%u\n", fat_free_blocks, super.amount_data_blocks);
-
-    int rdir_free_count = 0;
+    int rdirCount = 0;
     for(int i = 0; i < FS_FILE_MAX_COUNT; i++)
     {
         if(strcmp(rootDir[i].filename, "\0") == 0)
         {
-            rdir_free_count++;
+            rdirCount = rdirCount + 1;
         }
     }
-    printf("rdir_free_ratio=%d/%d\n", rdir_free_count, FS_FILE_MAX_COUNT);
+    printf("rdir_free_ratio=%d/%d\n", rdirCount, FS_FILE_MAX_COUNT);
     
-    return SUCCE;
+	return SUCCE;
 }
 
 
