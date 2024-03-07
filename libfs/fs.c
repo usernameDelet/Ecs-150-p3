@@ -104,6 +104,18 @@ int fs_umount(void)
 	return SUCCE;
 }
 
+int get_free(){
+    int fat_free = 0;
+    for (int i = 0; i < super.amount_data_blocks; i++)
+    {
+        if (fat[i] == 0) 
+        {
+            fat_free++;
+        }
+    }
+    return fat_free;
+}
+
 int fs_info(void)
 {
     /* TODO: Phase 1 */
@@ -129,15 +141,7 @@ int fs_info(void)
             rdirCount = rdirCount + 1;
         }
     }
-    int fat_free = 0;
-    fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
-    for (int i = 0; i < super.amount_data_blocks; i++)
-    {
-        if (fat[i] == FAT_EOC) 
-        {
-            fat_free++;
-        }
-    }
+    int fat_free = get_free();
     printf("fat_free_ratio=%d/%d\n",fat_free, super.amount_data_blocks);
     printf("rdir_free_ratio=%d/%d\n", rdirCount, FS_FILE_MAX_COUNT);
     return SUCCE;
