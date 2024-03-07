@@ -46,31 +46,41 @@ struct rootDirectory rootDir[FS_FILE_MAX_COUNT];
 struct file_descriptor filed[FS_OPEN_MAX_COUNT];
 int fs_mount(const char *diskname)
 {
-	/* TODO: Phase 1 */
-	struct root_dir *rootDir = malloc(sizeof(struct rootDirectory) * FS_FILE_MAX_COUNT);
-	fat = malloc(BLOCK_SIZE *(super.num_blocks_fat)* 2);
-	if(block_disk_open(diskname) == ERROR)
-	{
-		return ERROR;
-	}
-	if (strncmp(super.signature, "ECS150FS", 8) != 0 ||
-        block_read(0, &super) == ERROR ||
-        super.total_blocks != block_disk_count() ||
-        rootDir == NULL ||
-        block_read(super.root_dir_index, rootDir) == ERROR)
-	{
-		block_disk_close();
-		return ERROR;
-	}
-
-	for(int i = 0; i < super.num_blocks_fat; i++) 
-	{
-		if(block_read(i+1, &fat[i*BLOCK_SIZE/2]) == ERROR)
-		{
-			return ERROR;
-		}
-	}
-	return SUCCE;
+    fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
+    if(block_disk_open(diskname) == ERROR)
+    {
+        return ERROR;
+    }
+    if(strcmp((char*)super.signature, "ECS150FS") == ERROR)
+    {
+       
+        return ERROR;
+    }
+    if(block_read(0, &super) == ERROR)
+    {
+        
+        return ERROR;
+    }
+    if(super.total_blocks != block_disk_count())
+    {
+        
+        return ERROR;
+    }
+    
+    if (block_read(super.root_dir_index, (void *)rootDir) == ERROR) 
+    {
+       
+        return ERROR;
+    }
+    for(int i = 1; i < super.num_blocks_fat; i++) 
+    {
+        if(block_read(i+1, &fat[i-1]) == ERROR)
+        {
+            
+            return ERROR;
+        }
+    }
+    return SUCCE;
 }
 int fs_umount(void)
 {
