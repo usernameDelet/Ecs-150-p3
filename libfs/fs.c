@@ -53,34 +53,19 @@ int fs_mount(const char *diskname)
 	{
 		return ERROR;
 	}
-	if(strcmp(super.signature, "ECS150FS") != 0)
+	if (strncmp(super.signature, "ECS150FS", 8) != 0 ||
+        block_read(0, &super) == ERROR ||
+        super.total_blocks != block_disk_count() ||
+        rootDir == NULL ||
+        block_read(super.root_dir_index, rootDir) == ERROR)
 	{
 		block_disk_close();
 		return ERROR;
 	}
-	if(block_read(0, &super) == ERROR)
+
+	for(int i = 0; i < super.num_blocks_fat; i++) 
 	{
-		block_disk_close();
-		return ERROR;
-	}
-	if(super.total_blocks != block_disk_count())
-	{
-		block_disk_close();
-		return ERROR;
-	}
-	if (rootDir == NULL) 
-	{
-		block_disk_close();
-		return ERROR;
-	}
-	if (block_read(super.root_dir_index, rootDir) == ERROR) 
-	{
-		block_disk_close();
-		return ERROR;
-    }
-	for(int i = 1; i < super.num_blocks_fat; i++) 
-	{
-		if(block_read(i+1, &fat[i*BLOCK_SIZE/2]))
+		if(block_read(i+1, &fat[i*BLOCK_SIZE/2]) == ERROR)
 		{
 			return ERROR;
 		}
