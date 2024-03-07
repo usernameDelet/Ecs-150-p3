@@ -46,6 +46,8 @@ struct file_descriptor filed[FS_OPEN_MAX_COUNT];
 
 int fs_mount(const char *diskname)
 {
+    /* TODO: Phase 1 */
+    printf("hello 1");
     fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
     if(block_disk_open(diskname) == ERROR)
     {
@@ -80,13 +82,14 @@ int fs_mount(const char *diskname)
             return ERROR;
         }
     }
-    printf("hello 1");
+    
     return SUCCE;
 }
 
 int fs_umount(void)
 {
 	/* TODO: Phase 1 */
+    printf("hello 2");
 	if(block_disk_count() == ERROR)
 	{
 		return ERROR;
@@ -97,7 +100,7 @@ int fs_umount(void)
     }
 
     free(fat);
-    printf("hello 2");
+    
 	return SUCCE;
 }
 
