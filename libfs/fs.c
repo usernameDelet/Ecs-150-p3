@@ -137,7 +137,7 @@ int fs_info(void)
             fat_free++;
         }
     }
-    prinf("fat_free_ratio=%d/%d\n",fat_free, super.amount_data_blocks);
+    printf("fat_free_ratio=%d/%d\n",fat_free, super.amount_data_blocks);
     printf("rdir_free_ratio=%d/%d\n", rdirCount, FS_FILE_MAX_COUNT);
     return SUCCE;
 }
