@@ -129,9 +129,17 @@ int fs_info(void)
             rdirCount = rdirCount + 1;
         }
     }
+    int fat_free = 0;
+    for (int i = 0; i < super.amount_data_blocks; i++)
+    {
+        if (fat[i] == FAT_EOC) 
+        {
+            fat_free++;
+        }
+    }
+    prinf("fat_free_ratio=%d/%d\n",fat_free, super.amount_data_blocks);
     printf("rdir_free_ratio=%d/%d\n", rdirCount, FS_FILE_MAX_COUNT);
-    
-	return SUCCE;
+    return SUCCE;
 }
 
 
