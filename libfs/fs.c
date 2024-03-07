@@ -80,7 +80,7 @@ int fs_mount(const char *diskname)
             return ERROR;
         }
     }
-    printf('hello 1');
+    printf("hello 1");
     return SUCCE;
 }
 
@@ -97,14 +97,14 @@ int fs_umount(void)
     }
 
     free(fat);
-    printf('hello 2');
+    printf("hello 2");
 	return SUCCE;
 }
 
 int fs_info(void)
 {
     /* TODO: Phase 1 */
-    printf('hello 3');
+    printf("hello 3");
     if(block_disk_count() == ERROR)
     {
         return ERROR;
