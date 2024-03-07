@@ -39,11 +39,11 @@ struct file_descriptor
 	int   offset;
 };
 
-
 uint16_t *fat;
 struct superblock super;
 struct rootDirectory rootDir[FS_FILE_MAX_COUNT];
 struct file_descriptor filed[FS_OPEN_MAX_COUNT];
+
 int fs_mount(const char *diskname)
 {
     fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
@@ -51,7 +51,7 @@ int fs_mount(const char *diskname)
     {
         return ERROR;
     }
-    if(strcmp((char*)super.signature, "ECS150FS") == ERROR)
+    if (strncmp(super.signature, "ECS150FS", 8) != 0)
     {
        
         return ERROR;
@@ -72,9 +72,9 @@ int fs_mount(const char *diskname)
        
         return ERROR;
     }
-    for(int i = 1; i < super.num_blocks_fat; i++) 
+    for(int i = 0; i < super.num_blocks_fat; i++) 
     {
-        if(block_read(i+1, &fat[i-1]) == ERROR)
+        if(block_read(i+1, &fat[i]) == ERROR)
         {
             
             return ERROR;
@@ -82,6 +82,7 @@ int fs_mount(const char *diskname)
     }
     return SUCCE;
 }
+
 int fs_umount(void)
 {
 	/* TODO: Phase 1 */
@@ -93,28 +94,37 @@ int fs_umount(void)
 	{
         return ERROR;
     }
-	fat = malloc(BLOCK_SIZE *(super.num_blocks_fat)* 2);
-	block_write(super.root_dir_index, fat);
-	for(int i = 1; i < super.num_blocks_fat; i++) 
-	{
-		if(block_write(i+1, &fat[i*(BLOCK_SIZE/2)]))
-		{
-			return ERROR;
-		}
-	}
+
+    free(fat);
 	return SUCCE;
 }
 
 int fs_info(void)
 {
-	/* TODO: Phase 1 */
-	printf("Currently Mounted File System Information:\n");
-    printf("  Signature: %s\n", super.signature);
-    printf("  Total blocks: %u\n", super.total_blocks);
-    printf("  Root Directory Index: %u\n", super.root_dir_index);
-    printf("  Data Block Start Index: %u\n", super.data_block_start_index);
-    printf("  Number of Fat Blocks: %u\n", super.num_blocks_fat);
-    printf("  Number of Data Blocks: %u\n", super.amount_data_blocks);
+    /* TODO: Phase 1 */
+    if(block_disk_count() == ERROR)
+    {
+        return ERROR;
+    }
+
+	printf("FS Info:\n");
+    printf("total_blk_count=%u\n", super.total_blocks);
+    printf("fat_blk_count=%u\n", super.num_blocks_fat);
+    printf("rdir_blk=%u\n", super.root_dir_index);
+    printf("data_blk=%u\n", super.data_block_start_index);
+    printf("data_blk_count=%u\n", super.amount_data_blocks);
+    printf("fat_free_ratio=%u/%u\n", super.amount_data_blocks - super.num_blocks_fat, super.amount_data_blocks);
+
+    int rdirCount = 0;
+    for(int i = 0; i < FS_FILE_MAX_COUNT; i++)
+    {
+        if(rootDir[i].filename == '\0')
+        {
+            rdirCount = rdirCount + 1;
+        }
+    }
+    printf("rdir_free_ratio=%d/%d\n", rdirCount, FS_FILE_MAX_COUNT);
+    
 	return SUCCE;
 }
 
