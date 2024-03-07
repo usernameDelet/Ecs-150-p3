@@ -22,7 +22,7 @@ struct superblock
     uint16_t amount_data_blocks;  
     uint8_t  num_blocks_fat;       
     uint8_t  padding[4079];         
-};
+}__attribute__((packed));;
 
 struct rootDirectory
 {
