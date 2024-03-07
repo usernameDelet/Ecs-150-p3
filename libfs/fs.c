@@ -130,6 +130,7 @@ int fs_info(void)
         }
     }
     int fat_free = 0;
+    fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
     for (int i = 0; i < super.amount_data_blocks; i++)
     {
         if (fat[i] == FAT_EOC) 
