@@ -88,7 +88,7 @@ int fs_mount(const char *diskname)
 
 int fs_umount(void)
 {
-    printf("hello 2");
+    printf("Unmounting file system...\n");
     if(block_disk_count() == ERROR)
     {
         return ERROR;
@@ -98,63 +98,56 @@ int fs_umount(void)
         return ERROR;
     }
  
-    block_write(super.root_dir_index, fat);
-    
 
-    if(block_write(super.root_dir_index, (void *)rootDir) == ERROR)
-    {
+    if (block_write(1, fat) == ERROR) {
+        return ERROR;
+    }
+
+   
+    if (block_write(super.root_dir_index, rootDir) == ERROR) {
         return ERROR;
     }
     
     free(fat);
+    printf("File system unmounted successfully.\n");
     return SUCCE;
 }
 
-int get_free(){
-    int fat_free_new = 0;
-    for (int i = 0; i < super.amount_data_blocks; i++)
-    {
-        if (fat[i] == 0) 
-        {
-            fat_free_new++;
-        }
-    }
-    return fat_free_new;
-}
-int get_count(){
-    int rdirCount_new = 0;
-    for(int i = 0; i < FS_FILE_MAX_COUNT; i++)
-    {
-        if(strcmp(rootDir[i].filename, "\0") == 0)
-        {
-            rdirCount_new = rdirCount_new + 1;
-        }
-    }
-    return rdirCount_new;
-}
 int fs_info(void)
 {
-    /* TODO: Phase 1 */
-    printf("hello 3");
+    printf("Retrieving file system information...\n");
     if(block_disk_count() == ERROR)
     {
         return ERROR;
     }
 
-	printf("FS Info:\n");
+    printf("FS Info:\n");
     printf("total_blk_count=%u\n", super.total_blocks);
     printf("fat_blk_count=%u\n", super.num_blocks_fat);
     printf("rdir_blk=%u\n", super.root_dir_index);
     printf("data_blk=%u\n", super.data_block_start_index);
     printf("data_blk_count=%u\n", super.amount_data_blocks);
-    printf("fat_free_ratio=%u/%u\n", super.amount_data_blocks - super.num_blocks_fat, super.amount_data_blocks);
 
-    int fat_free = get_free();
-    printf("fat_free_ratio=%d/%d\n", fat_free, super.amount_data_blocks);
-    int rdirCount = get_count();
-    printf("rdir_free_ratio=%d/%d\n", rdirCount, FS_FILE_MAX_COUNT);
+    
+    int fat_free = 0;
+    for (int i = 0; i < super.amount_data_blocks; i++) {
+        if (fat[i] == FAT_EOC) {
+            fat_free++;
+        }
+    }
+    printf("fat_free_ratio=%d/%u\n", fat_free, super.amount_data_blocks);
 
-	return SUCCE;
+    
+    int rdir_free_count = 0;
+    for(int i = 0; i < FS_FILE_MAX_COUNT; i++) {
+        if(strcmp(rootDir[i].filename, "\0") == 0) {
+            rdir_free_count++;
+        }
+    }
+    printf("rdir_free_ratio=%d/%d\n", rdir_free_count, FS_FILE_MAX_COUNT);
+
+    printf("File system information retrieved.\n");
+    return SUCCE;
 }
 
 
