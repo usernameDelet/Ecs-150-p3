@@ -86,62 +86,50 @@ int fs_mount(const char *diskname)
 
 int fs_umount(void)
 {
-    if(block_disk_count() == ERROR)
-    {
-        return ERROR;
-    }
-    if(block_disk_close() == ERROR)
-    {
-        return ERROR;
-    }
- 
-
-    if (block_write(1, fat) == ERROR) {
+	/* TODO: Phase 1 */
+    printf("hello 2");
+	if(block_disk_count() == ERROR)
+	{
+		return ERROR;
+	}
+	if(block_disk_close() == ERROR)
+	{
         return ERROR;
     }
 
-   
-    if (block_write(super.root_dir_index, rootDir) == ERROR) {
-        return ERROR;
-    }
-    
     free(fat);
-    return SUCCE;
+    
+	return SUCCE;
 }
 
 int fs_info(void)
 {
+    /* TODO: Phase 1 */
+    printf("hello 3");
     if(block_disk_count() == ERROR)
     {
         return ERROR;
     }
 
-    printf("FS Info:\n");
+	printf("FS Info:\n");
     printf("total_blk_count=%u\n", super.total_blocks);
     printf("fat_blk_count=%u\n", super.num_blocks_fat);
     printf("rdir_blk=%u\n", super.root_dir_index);
     printf("data_blk=%u\n", super.data_block_start_index);
     printf("data_blk_count=%u\n", super.amount_data_blocks);
+    printf("fat_free_ratio=%u/%u\n", super.amount_data_blocks - super.num_blocks_fat, super.amount_data_blocks);
 
-    
-    int fat_free = 0;
-    for (int i = 0; i < super.amount_data_blocks; i++) {
-        if (fat[i] == FAT_EOC) {
-            fat_free++;
+    int rdirCount = 0;
+    for(int i = 0; i < FS_FILE_MAX_COUNT; i++)
+    {
+        if(strcmp(rootDir[i].filename, "\0") == 0)
+        {
+            rdirCount = rdirCount + 1;
         }
     }
-    printf("fat_free_ratio=%d/%u\n", fat_free, super.amount_data_blocks);
-
+    printf("rdir_free_ratio=%d/%d\n", rdirCount, FS_FILE_MAX_COUNT);
     
-    int rdir_free_count = 0;
-    for(int i = 0; i < FS_FILE_MAX_COUNT; i++) {
-        if(strcmp(rootDir[i].filename, "\0") == 0) {
-            rdir_free_count++;
-        }
-    }
-    printf("rdir_free_ratio=%d/%d\n", rdir_free_count, FS_FILE_MAX_COUNT);
-
-    return SUCCE;
+	return SUCCE;
 }
 
 
