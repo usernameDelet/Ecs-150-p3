@@ -47,7 +47,6 @@ struct file_descriptor filed[FS_OPEN_MAX_COUNT];
 int fs_mount(const char *diskname)
 {
     /* TODO: Phase 1 */
-    printf("hello 1");
     fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
     if(block_disk_open(diskname) == ERROR)
     {
@@ -82,13 +81,11 @@ int fs_mount(const char *diskname)
             return ERROR;
         }
     }
-    printf("done");
     return SUCCE;
 }
 
 int fs_umount(void)
 {
-    printf("Unmounting file system...\n");
     if(block_disk_count() == ERROR)
     {
         return ERROR;
@@ -109,13 +106,11 @@ int fs_umount(void)
     }
     
     free(fat);
-    printf("File system unmounted successfully.\n");
     return SUCCE;
 }
 
 int fs_info(void)
 {
-    printf("Retrieving file system information...\n");
     if(block_disk_count() == ERROR)
     {
         return ERROR;
@@ -146,7 +141,6 @@ int fs_info(void)
     }
     printf("rdir_free_ratio=%d/%d\n", rdir_free_count, FS_FILE_MAX_COUNT);
 
-    printf("File system information retrieved.\n");
     return SUCCE;
 }
 
