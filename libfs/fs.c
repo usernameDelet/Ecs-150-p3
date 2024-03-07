@@ -118,7 +118,7 @@ int fs_info(void)
     int rdirCount = 0;
     for(int i = 0; i < FS_FILE_MAX_COUNT; i++)
     {
-        if(rootDir[i].filename == '\0')
+        if(strcmp(rootDir[i].filename, "\0") == 0)
         {
             rdirCount = rdirCount + 1;
         }
