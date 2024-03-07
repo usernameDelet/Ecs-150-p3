@@ -325,9 +325,99 @@ int fs_lseek(int fd, size_t offset)
     return SUCCE;
 }
 
+uint16_t data_block_index(int file_index, size_t offset) 
+{
+    uint16_t block_index = rootDir[file_index].index_of_first;
+    while (offset >= BLOCK_SIZE && block_index != FAT_EOC) 
+    {
+        block_index = fat[block_index];
+        offset -= BLOCK_SIZE;
+    }
+    return block_index;
+}
+
+uint16_t allocate_block() {
+    for (uint16_t i = super.data_block_start_index; i < super.amount_data_blocks; i++) 
+    {
+        if (fat[i] == 0) 
+        {
+            return i;
+        }
+    }
+    return FAT_EOC;  
+}
+
+size_t min(size_t a, size_t b) 
+{
+    return a < b ? a : b;
+}
+
+
+
 int fs_write(int fd, void *buf, size_t count)
 {
 	/* TODO: Phase 4 */
+    if (super.signature[0] == '\0' || 
+                            fd < 0 || 
+                            fd >= FS_OPEN_MAX_COUNT || 
+                            filed[fd].file_index == ERROR || 
+                            buf == NULL) 
+    {
+        return ERROR;
+    }
+    int file_idx = filed[fd].file_index;
+    size_t offset = filed[fd].offset;
+    uint16_t block_index = data_block_index(file_idx, offset);
+
+    size_t bytes_written = 0;
+
+    while (bytes_written < count) 
+    {
+        uint16_t current_block = block_index;
+        int block_offset = offset % BLOCK_SIZE;
+        int bytes_to_write = min(count - bytes_written, BLOCK_SIZE - block_offset);
+        uint8_t block_buffer[BLOCK_SIZE];
+
+        if (current_block == FAT_EOC) 
+        {
+          
+            current_block = allocate_block();
+            if (current_block == FAT_EOC) 
+            {
+                
+                break;
+            }
+            fat[block_index] = current_block;
+            fat[current_block] = FAT_EOC;
+        }
+
+      
+        if (block_read(current_block, block_buffer) == ERROR) 
+        {
+            return ERROR;
+        }
+
+    
+        memcpy(block_buffer + block_offset, buf + bytes_written, bytes_to_write);
+
+      
+        if (block_write(current_block, block_buffer) == ERROR) 
+        {
+            return ERROR;
+        }
+
+        bytes_written += bytes_to_write;
+        offset += bytes_to_write;
+        block_index = fat[block_index];
+    }
+
+   
+    if (offset > rootDir[file_idx].size_of_file) 
+    {
+        rootDir[file_idx].size_of_file = offset;
+    }
+
+    return bytes_written;
 }
 
 int fs_read(int fd, void *buf, size_t count)
