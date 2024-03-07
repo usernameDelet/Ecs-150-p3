@@ -150,9 +150,10 @@ int fs_info(void)
     printf("fat_free_ratio=%u/%u\n", super.amount_data_blocks - super.num_blocks_fat, super.amount_data_blocks);
 
     int fat_free = get_free();
+    printf("fat_free_ratio=%d/%d\n", fat_free, super.amount_data_blocks);
     int rdirCount = get_count();
-    printf("fat_free_ratio=%d/%d\n",fat_free, super.amount_data_blocks);
     printf("rdir_free_ratio=%d/%d\n", rdirCount, FS_FILE_MAX_COUNT);
+
 	return SUCCE;
 }
 
