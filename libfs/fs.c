@@ -137,14 +137,12 @@ int fs_create(const char *filename)
 	/* TODO: Phase 2 */
 	if(filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
 	{
-        printf("he 1");
 		return ERROR;
 	}
 	for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
 	{
         if (strcmp(rootDir[i].filename, filename) == 0) 
 		{
-            printf("he 2");
             return ERROR; 
         }
     }
@@ -159,7 +157,6 @@ int fs_create(const char *filename)
     }
 	if (empty_entry == ERROR) 
 	{
-        printf("he 4");
         return ERROR;
     }
 
@@ -167,7 +164,6 @@ int fs_create(const char *filename)
 	rootDir[empty_entry].size_of_file = 0; 
     rootDir[empty_entry].index_of_first = FAT_EOC;
     block_write(super.root_dir_index, rootDir);
-    printf("he 3");
 	return SUCCE;
 
 }
@@ -175,10 +171,8 @@ int fs_create(const char *filename)
 int fs_delete(const char *filename)
 {
 	/* TODO: Phase 2 */
-    printf("he 11");
 	if (filename == NULL) 
     {
-        printf("he 5");
         return ERROR;
     }
     int file_index = ERROR;
@@ -192,7 +186,6 @@ int fs_delete(const char *filename)
     }
     if (file_index == ERROR) 
     {
-        printf("he 6");
         return ERROR;
     }
 
@@ -207,17 +200,14 @@ int fs_delete(const char *filename)
     rootDir[file_index].filename[0] = '\0';
     rootDir[file_index].size_of_file = 0;
     rootDir[file_index].index_of_first = FAT_EOC;
-    printf("he 7");
     return SUCCE;
 }
 
 int fs_ls(void)
 {
 	/* TODO: Phase 2 */
-    printf("he 8");
 	if(block_disk_count() == ERROR) 
 	{
-        printf("he 9");
 		return ERROR;
 	}
 	printf("FS Ls:\n");
@@ -235,7 +225,6 @@ int fs_ls(void)
             printf("\n");
         }
     }
-    printf("he 10");
     return SUCCE;
 }
 
@@ -378,6 +367,7 @@ size_t min(size_t a, size_t b)
 int fs_write(int fd, void *buf, size_t count)
 {
 	/* TODO: Phase 4 */
+    printf("h 1");
     if (super.signature[0] == '\0' || 
                             fd < 0 || 
                             fd >= FS_OPEN_MAX_COUNT || 
@@ -443,6 +433,7 @@ int fs_write(int fd, void *buf, size_t count)
 
 int fs_read(int fd, void *buf, size_t count)
 {
+    printf("h 1");
     if (fd < 0 || 
 		fd >= FS_OPEN_MAX_COUNT || 
 		filed[fd].file_index == ERROR ||  
