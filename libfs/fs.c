@@ -39,7 +39,7 @@ struct file_descriptor
 };
 
 uint16_t *fat;
-struct superblock super;
+struct superblock *super;
 struct rootDirectory rootDir[FS_FILE_MAX_COUNT];
 struct file_descriptor filed[FS_OPEN_MAX_COUNT];
 
@@ -54,20 +54,20 @@ int fs_mount(const char *diskname)
     {
         return ERROR;
     }
-    if (strncmp(super.signature, "ECS150FS", 8) != 0)
+    if (strncmp(super->signature, "ECS150FS", 8) != 0)
     {
         return ERROR;
     }
-    if(super.total_blocks != block_disk_count())
+    if(super->total_blocks != block_disk_count())
     {
         return ERROR;
     }
-    if (block_read(super.root_dir_index, (void *)rootDir) == ERROR) 
+    if (block_read(super->root_dir_index, (void *)rootDir) == ERROR) 
     {
         return ERROR;
     }
-    fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
-    for(int i = 0; i < super.num_blocks_fat; i++) 
+    fat = malloc(sizeof(uint16_t) * super->num_blocks_fat * BLOCK_SIZE);
+    for(int i = 0; i < super->num_blocks_fat; i++) 
     {
         if(block_read(i+1, &fat[i]) == ERROR)
         {
@@ -103,21 +103,21 @@ int fs_info(void)
     }
 
 	printf("FS Info:\n");
-    printf("total_blk_count=%u\n", super.total_blocks);
-    printf("fat_blk_count=%u\n", super.num_blocks_fat);
-    printf("rdir_blk=%u\n", super.root_dir_index);
-    printf("data_blk=%u\n", super.data_block_start_index);
-    printf("data_blk_count=%u\n", super.amount_data_blocks);
+    printf("total_blk_count=%u\n", super->total_blocks);
+    printf("fat_blk_count=%u\n", super->num_blocks_fat);
+    printf("rdir_blk=%u\n", super->root_dir_index);
+    printf("data_blk=%u\n", super->data_block_start_index);
+    printf("data_blk_count=%u\n", super->amount_data_blocks);
 
     int fat_free_blocks = 0;
-    for (int i = 0; i < super.amount_data_blocks; i++) 
+    for (int i = 0; i < super->amount_data_blocks; i++) 
     {
         if (fat[i] == 0) 
         {
             fat_free_blocks++;
         }
     }
-    printf("fat_free_ratio=%d/%u\n", fat_free_blocks, super.amount_data_blocks);
+    printf("fat_free_ratio=%d/%u\n", fat_free_blocks, super->amount_data_blocks);
 
     int rdirCount = 0;
     for(int i = 0; i < FS_FILE_MAX_COUNT; i++)
@@ -168,7 +168,7 @@ int fs_create(const char *filename)
     rootDir[empty_entry].size_of_file = 0; 
     rootDir[empty_entry].index_of_first = FAT_EOC;
 
-    if (block_write(super.root_dir_index, rootDir) == ERROR)
+    if (block_write(super->root_dir_index, rootDir) == ERROR)
     {
         return ERROR;
     }
@@ -256,7 +256,7 @@ int fs_open(const char *filename)
     {
         if (strcmp(rootDir[i].filename, filename) == 0) 
         {
-            index = i; 
+            index = i;
             break;
         }
     }
@@ -266,20 +266,25 @@ int fs_open(const char *filename)
         return ERROR; 
     }
 
-    
-    if (index < 0 || index >= FS_OPEN_MAX_COUNT) 
+    int new_fd_index = ERROR;
+    for (int i = 0; i < FS_OPEN_MAX_COUNT; i++)
     {
-
-        return ERROR;
+        if (filed[i].file_index == ERROR)
+        {
+            new_fd_index = i;
+            break;
+        }
     }
 
-    strcpy(filed[index].filename, filename); 
-    filed[index].offset = 0;
-    filed[index].file_index = index;
-
-    printf("here 1\n");
-    return SUCCE; 
-
+    if (new_fd_index != ERROR)
+    {
+        strcpy(filed[new_fd_index].filename, filename);
+        filed[new_fd_index].offset = 0;
+        filed[new_fd_index].file_index = index;
+        return new_fd_index; 
+    }
+    
+    return ERROR; 
 }
 
 int fs_close(int fd)
@@ -303,7 +308,7 @@ int fs_close(int fd)
 int fs_stat(int fd)
 {
 	/* TODO: Phase 3 */
-	if (super.signature[0] == '\0')
+	if (super->signature[0] == '\0')
     {
         return ERROR;
     }
@@ -358,7 +363,7 @@ uint16_t data_block_index(int file_index, size_t offset)
 }
 
 uint16_t allocate_block() {
-    for (uint16_t i = super.data_block_start_index; i < super.amount_data_blocks; i++) 
+    for (uint16_t i = super->data_block_start_index; i < super->amount_data_blocks; i++) 
     {
         if (fat[i] == 0) 
         {
@@ -378,7 +383,7 @@ size_t min(size_t a, size_t b)
 int fs_write(int fd, void *buf, size_t count)
 {
 	/* TODO: Phase 4 */
-    if (super.signature[0] == '\0' || 
+    if (super->signature[0] == '\0' || 
                             fd < 0 || 
                             fd >= FS_OPEN_MAX_COUNT || 
                             filed[fd].file_index == ERROR || 
