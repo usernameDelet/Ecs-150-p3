@@ -170,6 +170,7 @@ int fs_create(const char *filename)
 
 int fs_delete(const char *filename)
 {
+    printf("h 8");
 	/* TODO: Phase 2 */
 	if (filename == NULL) 
     {
@@ -205,6 +206,7 @@ int fs_delete(const char *filename)
 
 int fs_ls(void)
 {
+    printf("h 7");
 	/* TODO: Phase 2 */
 	if(block_disk_count() == ERROR) 
 	{
@@ -230,6 +232,7 @@ int fs_ls(void)
 
 int fs_open(const char *filename)
 {
+    printf("h 6");
     if (filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
     {
         return ERROR;
@@ -273,6 +276,7 @@ int fs_open(const char *filename)
 
 int fs_close(int fd)
 {
+    printf("h 5");
 	/* TODO: Phase 3 */
     if (fd >= FS_OPEN_MAX_COUNT || fd < 0)
     {
@@ -291,6 +295,7 @@ int fs_close(int fd)
 
 int fs_stat(int fd)
 {
+    printf("h 4");
 	/* TODO: Phase 3 */
 	if (super.signature[0] == '\0')
     {
@@ -319,6 +324,7 @@ int fs_stat(int fd)
 
 int fs_lseek(int fd, size_t offset)
 {
+    printf("h 3");
     if (fd >= FS_OPEN_MAX_COUNT || fd < 0)
     {
         return ERROR;
@@ -433,7 +439,7 @@ int fs_write(int fd, void *buf, size_t count)
 
 int fs_read(int fd, void *buf, size_t count)
 {
-    printf("h 1");
+    printf("h 2");
     if (fd < 0 || 
 		fd >= FS_OPEN_MAX_COUNT || 
 		filed[fd].file_index == ERROR ||  
