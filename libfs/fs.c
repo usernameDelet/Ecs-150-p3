@@ -47,7 +47,7 @@ struct file_descriptor filed[FS_OPEN_MAX_COUNT];
 int fs_mount(const char *diskname)
 {
     /* TODO: Phase 1 */
-	
+    // not sure why there needs a printf function for info to work
     printf("");
     fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
     if(block_disk_open(diskname) == ERROR)
@@ -112,7 +112,16 @@ int fs_info(void)
     printf("rdir_blk=%u\n", super.root_dir_index);
     printf("data_blk=%u\n", super.data_block_start_index);
     printf("data_blk_count=%u\n", super.amount_data_blocks);
-    printf("fat_free_ratio=%u/%u\n", super.amount_data_blocks - super.num_blocks_fat, super.amount_data_blocks);
+
+    int fat_free_blocks = 0;
+    for (int i = 0; i < super.amount_data_blocks; i++) 
+    {
+        if (fat[i] == FAT_EOC) 
+        {
+            fat_free_blocks++;
+        }
+    }
+    printf("fat_free_ratio=%d/%u\n", fat_free_blocks, super.amount_data_blocks);
 
     int rdirCount = 0;
     for(int i = 0; i < FS_FILE_MAX_COUNT; i++)
