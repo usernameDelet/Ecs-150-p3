@@ -9,7 +9,6 @@
 
 #define ERROR -1
 #define SUCCE 0
-
 #define FAT_EOC 0xFFFF
 
 /* TODO: Phase 1 */
@@ -116,7 +115,7 @@ int fs_info(void)
     int fat_free_blocks = 0;
     for (int i = 0; i < super.amount_data_blocks; i++) 
     {
-        if (fat[i] == 0) 
+        if (fat[i] == FAT_EOC) 
         {
             fat_free_blocks++;
         }
