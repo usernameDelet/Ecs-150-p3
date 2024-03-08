@@ -256,7 +256,7 @@ int fs_open(const char *filename)
     {
         if (strcmp(rootDir[i].filename, filename) == 0) 
         {
-            index = i;
+            index = i; 
             break;
         }
     }
@@ -266,25 +266,20 @@ int fs_open(const char *filename)
         return ERROR; 
     }
 
-    int new_fd_index = ERROR;
-    for (int i = 0; i < FS_OPEN_MAX_COUNT; i++)
+    
+    if (index < 0 || index >= FS_OPEN_MAX_COUNT) 
     {
-        if (filed[i].file_index == ERROR)
-        {
-            new_fd_index = i;
-            break;
-        }
+
+        return ERROR;
     }
 
-    if (new_fd_index != ERROR)
-    {
-        strcpy(filed[new_fd_index].filename, filename);
-        filed[new_fd_index].offset = 0;
-        filed[new_fd_index].file_index = index;
-        return new_fd_index; 
-    }
-    
-    return ERROR; 
+    strcpy(filed[index].filename, filename); 
+    filed[index].offset = 0;
+    filed[index].file_index = index;
+
+    printf("here 1\n");
+    return SUCCE; 
+
 }
 
 int fs_close(int fd)
