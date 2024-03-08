@@ -47,7 +47,7 @@ int fs_mount(const char *diskname)
 {
     /* TODO: Phase 1 */
     // not sure why there needs a printf function for info to work
-    printf("");
+    printf(" ");
     fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
     if(block_disk_open(diskname) == ERROR)
     {
