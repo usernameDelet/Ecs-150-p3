@@ -116,7 +116,7 @@ int fs_info(void)
     int fat_free_blocks = 0;
     for (int i = 0; i < super.amount_data_blocks; i++) 
     {
-        if (fat[i] == FAT_EOC) 
+        if (fat[i] != FAT_EOC) 
         {
             fat_free_blocks++;
         }
