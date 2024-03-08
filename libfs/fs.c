@@ -79,6 +79,7 @@ int fs_mount(const char *diskname)
 
 int fs_umount(void)
 {
+    printf("h12");
 	/* TODO: Phase 1 */
 	if(block_disk_count() == ERROR)
 	{
