@@ -47,7 +47,6 @@ struct file_descriptor filed[FS_OPEN_MAX_COUNT];
 int fs_mount(const char *diskname)
 {
     /* TODO: Phase 1 */
-    printf("hello 1");
     fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
     if(block_disk_open(diskname) == ERROR)
     {
