@@ -175,6 +175,7 @@ int fs_delete(const char *filename)
 	/* TODO: Phase 2 */
 	if (filename == NULL) 
     {
+        printf("he 5");
         return ERROR;
     }
     int file_index = ERROR;
@@ -188,6 +189,7 @@ int fs_delete(const char *filename)
     }
     if (file_index == ERROR) 
     {
+        printf("he 6");
         return ERROR;
     }
 
@@ -202,15 +204,17 @@ int fs_delete(const char *filename)
     rootDir[file_index].filename[0] = '\0';
     rootDir[file_index].size_of_file = 0;
     rootDir[file_index].index_of_first = FAT_EOC;
-
+    printf("he 7");
     return SUCCE;
 }
 
 int fs_ls(void)
 {
 	/* TODO: Phase 2 */
+    printf("he 8");
 	if(block_disk_count() == ERROR) 
 	{
+        printf("he 9");
 		return ERROR;
 	}
 	printf("FS Ls:\n");
@@ -228,6 +232,7 @@ int fs_ls(void)
             printf("\n");
         }
     }
+    printf("he 10");
     return SUCCE;
 }
 
