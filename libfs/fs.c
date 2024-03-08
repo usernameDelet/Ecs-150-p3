@@ -159,12 +159,13 @@ int fs_create(const char *filename)
     }
 	if (empty_entry == ERROR) 
 	{
-        printf("he 1");
+        printf("he 4");
         return ERROR;
     }
 	memcpy(rootDir[empty_entry].filename, filename, FS_FILENAME_LEN);
 	rootDir[empty_entry].size_of_file = 0; 
-    rootDir[empty_entry].index_of_first = FAT_EOC; 
+    rootDir[empty_entry].index_of_first = FAT_EOC;
+    printf("he 3");
 	return SUCCE;
 
 }
