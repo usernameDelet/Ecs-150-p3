@@ -231,48 +231,49 @@ int fs_ls(void)
     return SUCCE;
 }
 
-int fs_open(const char *filename)
+int fs_create(const char *filename)
 {
-    printf("h 6");
-    if (filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
-    {
+	/* TODO: Phase 2 */
+	if(filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
+	{
+        printf("he 1");
+		return ERROR;
+	}
+	for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
+	{
+        if (strcmp(rootDir[i].filename, filename) == 0) 
+		{
+            printf("he 2");
+            return ERROR; 
+        }
+    }
+	int empty_entry = ERROR;
+    for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
+	{
+        if (strcmp(rootDir[i].filename, "") == 0) 
+		{
+            empty_entry = i;
+            break;
+        }
+    }
+	if (empty_entry == ERROR) 
+	{
+        printf("he 4");
         return ERROR;
     }
 
-    int index = ERROR;
-    for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
-    {
-        if (strcmp(rootDir[i].filename, filename) == 0) 
-        {
-            index = i;
-            break;
-        }
-    }
+	memset(rootDir[empty_entry].filename, 0, FS_FILENAME_LEN); // Clear filename buffer
+    strncpy(rootDir[empty_entry].filename, filename, FS_FILENAME_LEN - 1);
+    rootDir[empty_entry].size_of_file = 0; 
+    rootDir[empty_entry].index_of_first = FAT_EOC;
 
-    if (index == ERROR) 
+    if (block_write(super.root_dir_index, rootDir) == ERROR)
     {
-        return ERROR; 
+        return ERROR;
     }
+    printf("he 3");
+    return SUCCE;
 
-    int new_fd_index = ERROR;
-    for (int i = 0; i < FS_OPEN_MAX_COUNT; i++)
-    {
-        if (filed[i].file_index == ERROR)
-        {
-            new_fd_index = i;
-            break;
-        }
-    }
-
-    if (new_fd_index != ERROR)
-    {
-        strcpy(filed[new_fd_index].filename, filename);
-        filed[new_fd_index].offset = 0;
-        filed[new_fd_index].file_index = index;
-        return new_fd_index; 
-    }
-    
-    return ERROR; 
 }
 
 int fs_close(int fd)
