@@ -47,6 +47,7 @@ struct file_descriptor filed[FS_OPEN_MAX_COUNT];
 int fs_mount(const char *diskname)
 {
     /* TODO: Phase 1 */
+    printf("hello 1");
     fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
     if(block_disk_open(diskname) == ERROR)
     {
@@ -54,19 +55,23 @@ int fs_mount(const char *diskname)
     }
     if(block_read(0, &super) == ERROR)
     {
+        printf("e 3");
         return ERROR;
     }
     if (strncmp(super.signature, "ECS150FS", 8) != 0)
     {
+       printf("e 2");
         return ERROR;
     }
     if(super.total_blocks != block_disk_count())
     {
+        printf("e 4");
         return ERROR;
     }
     
     if (block_read(super.root_dir_index, (void *)rootDir) == ERROR) 
     {
+       printf("e 5");
         return ERROR;
     }
     for(int i = 0; i < super.num_blocks_fat; i++) 
