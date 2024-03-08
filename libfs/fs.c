@@ -173,6 +173,7 @@ int fs_create(const char *filename)
 int fs_delete(const char *filename)
 {
 	/* TODO: Phase 2 */
+    printf("he 11");
 	if (filename == NULL) 
     {
         printf("he 5");
