@@ -151,7 +151,7 @@ int fs_create(const char *filename)
 	int empty_entry = ERROR;
     for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
 	{
-        if (rootDir[i].filename[0] == '\0') 
+        if (strcmp(rootDir[i].filename, "") == 0) 
 		{
             empty_entry = i;
             break;
@@ -162,9 +162,11 @@ int fs_create(const char *filename)
         printf("he 4");
         return ERROR;
     }
-	memcpy(rootDir[empty_entry].filename, filename, FS_FILENAME_LEN);
+
+	memcpy(rootDir[empty_entry].filename, filename, strlen(filename));
 	rootDir[empty_entry].size_of_file = 0; 
     rootDir[empty_entry].index_of_first = FAT_EOC;
+    block_write(super.root_dir_index, rootDir);
     printf("he 3");
 	return SUCCE;
 
