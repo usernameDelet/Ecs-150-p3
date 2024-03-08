@@ -46,9 +46,6 @@ struct file_descriptor filed[FS_OPEN_MAX_COUNT];
 int fs_mount(const char *diskname)
 {
     /* TODO: Phase 1 */
-    // not sure why there needs a printf function for info to work
-    printf(" ");
-    fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
     if(block_disk_open(diskname) == ERROR)
     {
         return ERROR;
@@ -65,11 +62,11 @@ int fs_mount(const char *diskname)
     {
         return ERROR;
     }
-    
     if (block_read(super.root_dir_index, (void *)rootDir) == ERROR) 
     {
         return ERROR;
     }
+    fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
     for(int i = 0; i < super.num_blocks_fat; i++) 
     {
         if(block_read(i+1, &fat[i]) == ERROR)
@@ -140,12 +137,14 @@ int fs_create(const char *filename)
 	/* TODO: Phase 2 */
 	if(filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
 	{
+        printf("he 1");
 		return ERROR;
 	}
 	for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
 	{
         if (strcmp(rootDir[i].filename, filename) == 0) 
 		{
+            printf("he 2");
             return ERROR; 
         }
     }
@@ -160,6 +159,7 @@ int fs_create(const char *filename)
     }
 	if (empty_entry == ERROR) 
 	{
+        printf("he 1");
         return ERROR;
     }
 	memcpy(rootDir[empty_entry].filename, filename, FS_FILENAME_LEN);
