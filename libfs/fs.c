@@ -450,7 +450,7 @@ int fs_read(int fd, void *buf, size_t count)
     }
 
     // Get the file size
-    size_t file_size = rootDir[filed[fd].file_index].size_of_file;
+    int file_size = rootDir[filed[fd].file_index].size_of_file;
 
     // Check if there is nothing to read
     if (filed[fd].offset >= file_size)
