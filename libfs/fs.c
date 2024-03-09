@@ -111,9 +111,7 @@ int fs_umount(void)
     }
 
     free(super);
-    free(rootDir);
     free(fat);
-    free(filed);
     return SUCCE;
 }
 
