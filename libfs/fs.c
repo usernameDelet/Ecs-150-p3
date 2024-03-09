@@ -332,34 +332,39 @@ int fs_stat(int fd)
         // invlid counts of the block
         return ERROR;
     }
-
     int file_block_count = (rootDir[filed[fd].file_index].size_of_file + BLOCK_SIZE - 1) / BLOCK_SIZE;
     if (file_block_count > block_count)
     {
+        // calculated block count is greater than the total block count
         return ERROR;
     }
-
+    // done, return the size of the file
     return rootDir[filed[fd].file_index].size_of_file;
 }
-
 int fs_lseek(int fd, size_t offset)
 {
+    //error checking
     if (fd >= FS_OPEN_MAX_COUNT || fd < 0)
     {
+        //parameter out of bounds
         return ERROR;
     }
     if (filed[fd].file_index == ERROR) 
     {
+        //target file is invlid
         return ERROR;
     }
     if (offset > rootDir[filed[fd].file_index].size_of_file)
     {
+        //provided offset is greater than the size of the file, invlid offset
         return ERROR;
     }
+    // update the offset of the target file
     filed[fd].offset = offset;
+    // doen
     return SUCCE;
 }
-
+// calculate the block index for a given file and offset
 uint16_t data_block_index(int file_index, size_t offset) 
 {
     uint16_t block_index = rootDir[file_index].index_of_first;
@@ -370,7 +375,7 @@ uint16_t data_block_index(int file_index, size_t offset)
     }
     return block_index;
 }
-
+//find and allocate an available data block in the fat
 uint16_t allocate_block() {
     for (uint16_t i = super.data_block_start_index; i < super.amount_data_blocks; i++) 
     {
@@ -381,136 +386,130 @@ uint16_t allocate_block() {
     }
     return FAT_EOC;  
 }
-
+// return the minimum of two size values
 size_t min(size_t a, size_t b) 
 {
     return a < b ? a : b;
 }
-
-
-
 int fs_write(int fd, void *buf, size_t count)
 {
 	/* TODO: Phase 4 */
+    //error checking
     if (super.signature[0] == '\0' || 
                             fd < 0 || 
                             fd >= FS_OPEN_MAX_COUNT || 
                             filed[fd].file_index == ERROR || 
                             buf == NULL) 
     {
+        // invalid parameters or filesystem not mounted
         return ERROR;
     }
     int file_idx = filed[fd].file_index;
     size_t offset = filed[fd].offset;
     uint16_t block_index = data_block_index(file_idx, offset);
-
     size_t bytes_written = 0;
-
     while (bytes_written < count) 
     {
         uint16_t current_block = block_index;
         int block_offset = offset % BLOCK_SIZE;
         int bytes_to_write = min(count - bytes_written, BLOCK_SIZE - block_offset);
         uint8_t block_buffer[BLOCK_SIZE];
-
+        // allocate a new block if current block is 0xFFF
         if (current_block == FAT_EOC) 
         {
-          
             current_block = allocate_block();
             if (current_block == FAT_EOC) 
             {
-                
+                //allocation was successful
                 break;
             }
+            // update fat
             fat[block_index] = current_block;
             fat[current_block] = FAT_EOC;
         }
-
-      
+        // read the block from disk into buffer
         if (block_read(current_block, block_buffer) == ERROR) 
         {
+            // fail to read the block
             return ERROR;
         }
-
-    
+        // move the data from the provided buffer to the block buffer
         memcpy(block_buffer + block_offset, buf + bytes_written, bytes_to_write);
-
-      
+        // update the changed buffer
         if (block_write(current_block, block_buffer) == ERROR) 
         {
+            // fail to updaate
             return ERROR;
         }
-
+        // update the counters and move to the next block
         bytes_written += bytes_to_write;
         offset += bytes_to_write;
         block_index = fat[block_index];
     }
-
-   
+    // update file size in the root directory entry
     if (offset > rootDir[file_idx].size_of_file) 
     {
         rootDir[file_idx].size_of_file = offset;
     }
-
+    //done
     return bytes_written;
 }
-
 int fs_read(int fd, void *buf, size_t count)
 {
-    // Check for invalid file descriptor
-    if (fd < 0 || fd >= FS_OPEN_MAX_COUNT || filed[fd].filename[0] == '\0' || block_disk_count() == ERROR || buf == NULL)
+    // error checking
+    if (fd < 0 || 
+        fd >= FS_OPEN_MAX_COUNT || 
+        filed[fd].filename[0] == '\0' || 
+        block_disk_count() == ERROR || 
+        buf == NULL)
     {
+        //invlid parameter
         return ERROR;
     }
-
-    // Get the file size
     int file_size = rootDir[filed[fd].file_index].size_of_file;
-
-    // Check if there is nothing to read
     if (filed[fd].offset >= file_size)
     {
-        return 0;
+        //there is nothing to read
+        return SUCCE;
     }
 
-    // Calculate the block index and offset within the block
+    //calculate the block index and offset within the block
     uint16_t block_index = filed[fd].offset / BLOCK_SIZE;
     uint16_t block_offset = filed[fd].offset % BLOCK_SIZE;
 
-    // Read data from the file
+    // read data from the file
     size_t bytes_read = 0;
     while (count > 0 && filed[fd].offset < file_size)
     {
-        // Read the block from disk
+        // read the block from disk
         char block[BLOCK_SIZE];
         uint16_t block_to_read = fat[rootDir[filed[fd].file_index].index_of_first + block_index];
-
-        // Check for FAT_EOC and read the block
+        //check for FAT_EOC and read the block
         if (block_to_read == FAT_EOC || block_read(block_to_read, block) == ERROR)
         {
-            return ERROR; // Unable to read the block
+            // fail to read the block
+            return ERROR; 
         }
-
-        // Calculate the number of bytes to read in the current block
+        // calculate the number of bytes to read in the current block
         size_t bytes_to_read = count;
         if (bytes_to_read > (size_t)(BLOCK_SIZE - block_offset))
         {
             bytes_to_read = BLOCK_SIZE - block_offset;
         }
-
-        // Copy data from the block
+        // copy the data from the block
         memcpy(buf, block + block_offset, bytes_to_read);
 
-        // Update file offset and counters
+        //update file offset and counters
         filed[fd].offset += bytes_to_read;
         buf += bytes_to_read;
         count -= bytes_to_read;
         bytes_read += bytes_to_read;
 
-        // Move to the next block
+        // move to the next block
         ++block_index;
         block_offset = 0;
     }
 
-    // Return the number of bytes actually read
+    // done
     return bytes_read;
 }
