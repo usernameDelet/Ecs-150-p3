@@ -101,6 +101,14 @@ int fs_umount(void)
             return ERROR;
         }
     }
+	if(block_disk_count() == ERROR)
+	{
+		return ERROR;
+	}
+	if(block_disk_close() == ERROR)
+	{
+        return ERROR;
+    }
 
     free(super);
     free(rootDir);
