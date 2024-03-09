@@ -79,7 +79,7 @@ int fs_mount(const char *diskname)
 		return ERROR;	
 	}
     filed = malloc(sizeof(struct file_descriptor) * FS_OPEN_MAX_COUNT);
-    fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
+    fat = malloc(sizeof(uint16_t) * super->num_blocks_fat * BLOCK_SIZE);
     for(int i = 0; i < super->num_blocks_fat; i++) 
     {
         if(block_read(i+1, &fat[i]) == ERROR)
