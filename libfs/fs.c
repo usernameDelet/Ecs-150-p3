@@ -43,7 +43,7 @@ struct file_descriptor{
 struct superblock* super = NULL;
 struct rootDirectory* rootDir = NULL;
 fat_entry* fat = NULL;
-struct file_descriptor* filed = NULL;
+struct file_descriptor filed[FS_OPEN_MAX_COUNT];
 
 
 int fs_mount(const char *diskname)
@@ -78,7 +78,6 @@ int fs_mount(const char *diskname)
 		free(super);
 		return ERROR;	
 	}
-    filed = malloc(sizeof(struct file_descriptor) * FS_OPEN_MAX_COUNT);
     fat = malloc(sizeof(uint16_t) * super->num_blocks_fat * BLOCK_SIZE);
     for(int i = 0; i < super->num_blocks_fat; i++) 
     {
