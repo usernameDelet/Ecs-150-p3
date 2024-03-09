@@ -10,7 +10,7 @@
 #define ERROR -1
 #define SUCCE 0
 #define FAT_EOC 0xFFFF
-int add_data_block(int);
+int data_block_index(int, size_t);
 int allocate_data_block(void);
 /* TODO: Phase 1 */
 struct superblock 
@@ -361,7 +361,7 @@ int fs_write(int fd, void *buf, size_t count) {
 
     int amount_written = 0; 
     while (count > 0) {
-        int current_block = offset_to_block(fd, filed[fd].offset);
+        int current_block = data_block_index(fd, filed[fd].offset);
         if (current_block == FAT_EOC) {
             int new_block = allocate_data_block();
             if (new_block == ERROR) {
@@ -448,7 +448,7 @@ int fs_read(int fd, void *buf, size_t count) {
 
 
 
-int offset_to_block(int fd, size_t offset) {
+int data_block_index(int fd, size_t offset) {
     uint16_t fat_looper = filed[fd].file_index;
     size_t block_number = offset / BLOCK_SIZE;
 
