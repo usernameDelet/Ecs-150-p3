@@ -464,7 +464,7 @@ int fs_read(int fd, void *buf, size_t count)
 
     // Read data from the file
     size_t bytes_read = 0;
-    while (count > 0 && (uint32_t)filed[fd].offset < file_size)
+    while (count > 0 && filed[fd].offset < file_size)
     {
         // Read the block from disk
         char block[BLOCK_SIZE];
