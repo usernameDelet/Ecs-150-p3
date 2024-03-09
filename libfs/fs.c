@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -23,51 +24,63 @@ struct superblock
     uint8_t  padding[4079];         
 }__attribute__((packed));;
 
+typedef uint16_t fat_entry;
+
 struct rootDirectory
 {
 	char 		filename[FS_FILENAME_LEN];
 	uint32_t    size_of_file;
 	uint16_t 	index_of_first;
 	uint8_t 	unused[10];
+}__attribute__((packed));;
+
+struct file_descriptor{
+	char filename[16];
+	size_t offset;
+	uint16_t  file_index;
 };
 
-struct file_descriptor
-{
-	char  filename[FS_FILENAME_LEN];
-	int   file_index;
-	int   offset;
-};
+struct superblock* super = NULL;
+struct rootDirectory* rootDir = NULL;
+fat_entry* fat = NULL;
+struct file_descriptor* filed = NULL;
 
-uint16_t *fat;
-struct superblock super;
-struct rootDirectory rootDir[FS_FILE_MAX_COUNT];
-struct file_descriptor filed[FS_OPEN_MAX_COUNT];
 
 int fs_mount(const char *diskname)
 {
-    /* TODO: Phase 1 */
-    if(block_disk_open(diskname) == ERROR)
+	
+	
+	super = malloc(sizeof(struct superblock));
+	rootDir = malloc(sizeof(struct rootDirectory) * FS_FILE_MAX_COUNT);
+	
+
+	if(block_disk_open(diskname) == ERROR){
+		free(super);
+		return ERROR;
+	}
+
+	if(block_read(0, super) == ERROR){
+	
+		free(super);
+		return ERROR;
+	}
+	if (strncmp(super->signature, "ECS150FS", 8) != 0)
     {
         return ERROR;
     }
-    if(block_read(0, &super) == ERROR)
+
+	if(super->total_blocks != block_disk_count())
     {
         return ERROR;
     }
-    if (strncmp(super.signature, "ECS150FS", 8) != 0)
-    {
-        return ERROR;
-    }
-    if(super.total_blocks != block_disk_count())
-    {
-        return ERROR;
-    }
-    if (block_read(super.root_dir_index, (void *)rootDir) == ERROR) 
-    {
-        return ERROR;
-    }
-    fat = malloc(sizeof(uint16_t) * super.num_blocks_fat * BLOCK_SIZE);
-    for(int i = 0; i < super.num_blocks_fat; i++) 
+
+	if (super->num_blocks_fat+1 != super->root_dir_index){
+		free(super);
+		return ERROR;	
+	}
+    filed = malloc(sizeof(struct file_descriptor) * FS_OPEN_MAX_COUNT);
+    fat = malloc(super->num_blocks_fat * BLOCK_SIZE);
+    for(int i = 0; i < super->num_blocks_fat; i++) 
     {
         if(block_read(i+1, &fat[i]) == ERROR)
         {
@@ -77,47 +90,54 @@ int fs_mount(const char *diskname)
     return SUCCE;
 }
 
+
 int fs_umount(void)
 {
-	/* TODO: Phase 1 */
-	if(block_disk_count() == ERROR)
-	{
+	
+	fat = malloc(super->num_blocks_fat * BLOCK_SIZE);
+
+	if(super == NULL){
 		return ERROR;
 	}
-	if(block_disk_close() == ERROR)
-	{
-        return ERROR;
-    }
+	for(int i=0; i<FS_OPEN_MAX_COUNT; i++){
+		if(filed[i].filename[0] != '\0'){
+			
+			return ERROR;
+		}
+	}
 
-    free(fat);
-    
+
+	free(super);
+	free(rootDir);
+	free(fat);
+	free(filed);
 	return SUCCE;
+
 }
 
 int fs_info(void)
 {
-    /* TODO: Phase 1 */
-    if(block_disk_count() == ERROR)
+	if(block_disk_count() == ERROR)
     {
         return ERROR;
     }
 
 	printf("FS Info:\n");
-    printf("total_blk_count=%u\n", super.total_blocks);
-    printf("fat_blk_count=%u\n", super.num_blocks_fat);
-    printf("rdir_blk=%u\n", super.root_dir_index);
-    printf("data_blk=%u\n", super.data_block_start_index);
-    printf("data_blk_count=%u\n", super.amount_data_blocks);
+    printf("total_blk_count=%u\n",super->total_blocks);
+    printf("fat_blk_count=%u\n", super->num_blocks_fat);
+    printf("rdir_blk=%u\n", super->root_dir_index);
+    printf("data_blk=%u\n", super->data_block_start_index);
+    printf("data_blk_count=%u\n", super->amount_data_blocks);
 
     int fat_free_blocks = 0;
-    for (int i = 0; i < super.amount_data_blocks; i++) 
+    for (int i = 0; i < super->amount_data_blocks; i++) 
     {
         if (fat[i] == 0) 
         {
             fat_free_blocks++;
         }
     }
-    printf("fat_free_ratio=%d/%u\n", fat_free_blocks, super.amount_data_blocks);
+    printf("fat_free_ratio=%d/%u\n", fat_free_blocks, super->amount_data_blocks);
 
     int rdirCount = 0;
     for(int i = 0; i < FS_FILE_MAX_COUNT; i++)
@@ -134,7 +154,7 @@ int fs_info(void)
 
 int fs_create(const char *filename)
 {
-	/* TODO: Phase 2 */
+	
 	if(filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
 	{
         printf("he 1");
@@ -168,7 +188,7 @@ int fs_create(const char *filename)
     rootDir[empty_entry].size_of_file = 0; 
     rootDir[empty_entry].index_of_first = FAT_EOC;
 
-    if (block_write(super.root_dir_index, rootDir) == ERROR)
+    if (block_write(super->root_dir_index, rootDir) == ERROR)
     {
         return ERROR;
     }
@@ -179,8 +199,7 @@ int fs_create(const char *filename)
 
 int fs_delete(const char *filename)
 {
-	/* TODO: Phase 2 */
-    printf("he 11");
+	
 	if (filename == NULL) 
     {
         printf("he 5");
@@ -212,14 +231,12 @@ int fs_delete(const char *filename)
     rootDir[file_index].filename[0] = '\0';
     rootDir[file_index].size_of_file = 0;
     rootDir[file_index].index_of_first = FAT_EOC;
-    printf("he 7");
+   
     return SUCCE;
 }
 
 int fs_ls(void)
 {
-	/* TODO: Phase 2 */
-    printf("he 8");
 	if(block_disk_count() == ERROR) 
 	{
         printf("he 9");
@@ -246,7 +263,7 @@ int fs_ls(void)
 
 int fs_open(const char *filename)
 {
-    if (filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
+	if (filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
     {
         return ERROR;
     }
@@ -284,67 +301,58 @@ int fs_open(const char *filename)
 
 int fs_close(int fd)
 {
-	/* TODO: Phase 3 */
-    if (fd >= FS_OPEN_MAX_COUNT || fd < 0)
+	if (fd >= FS_OPEN_MAX_COUNT || fd < 0)
     {
         return ERROR;
     }
-    if (filed[fd].file_index == ERROR) 
+    if (filed[fd].filename[0] == '\0')
     {
         return ERROR;
     }
-    filed[fd].filename[0] = '\0';
-    filed[fd].file_index = ERROR;
-    filed[fd].offset = 0;
+
+	filed[fd].filename[0] = '\0'; 
+    filed[fd].offset = 0;           
+    filed[fd].file_index = ERROR;      
+
     return SUCCE;
 }
 
-
-int fs_stat(int fd)
+int fs_stat(int fd) 
 {
-	/* TODO: Phase 3 */
-	if (super.signature[0] == '\0')
-    {
-        return ERROR;
+    if (super == NULL || fd < 0 || fd >= FS_OPEN_MAX_COUNT || filed[fd].filename[0] == '\0') {
+        return ERROR; 
     }
     
-    if (fd < 0 || fd >= FS_OPEN_MAX_COUNT || filed[fd].file_index == ERROR)
-    {
-        return ERROR;
+    for (int i = 0; i < FS_FILE_MAX_COUNT; i++) {
+        if (strcmp(rootDir[i].filename, filed[fd].filename) == 0) {
+            return rootDir[i].size_of_file; 
+        }
     }
 
-    int block_count = block_disk_count();
-    if (block_count == ERROR)
-    {
-        return ERROR;
-    }
-
-    int file_block_count = (rootDir[filed[fd].file_index].size_of_file + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    if (file_block_count > block_count)
-    {
-        return ERROR;
-    }
-
-    return rootDir[filed[fd].file_index].size_of_file;
+    return ERROR; 
 }
+
+
 
 int fs_lseek(int fd, size_t offset)
 {
-    if (fd >= FS_OPEN_MAX_COUNT || fd < 0)
+    if (super == NULL || fd < 0 || fd >= FS_OPEN_MAX_COUNT || filed[fd].filename[0] == '\0')
     {
-        return ERROR;
+        return ERROR; 
     }
-    if (filed[fd].file_index == ERROR) 
+    
+    int file_size = fs_stat(fd);
+    if (file_size == -1 || offset > (size_t)file_size)
     {
-        return ERROR;
+        return ERROR; 
     }
-    if (offset > rootDir[filed[fd].file_index].size_of_file)
-    {
-        return ERROR;
-    }
+
     filed[fd].offset = offset;
     return SUCCE;
 }
+
+
+
 
 uint16_t data_block_index(int file_index, size_t offset) 
 {
@@ -358,7 +366,7 @@ uint16_t data_block_index(int file_index, size_t offset)
 }
 
 uint16_t allocate_block() {
-    for (uint16_t i = super.data_block_start_index; i < super.amount_data_blocks; i++) 
+    for (uint16_t i = super->data_block_start_index; i < super->amount_data_blocks; i++) 
     {
         if (fat[i] == 0) 
         {
@@ -372,20 +380,17 @@ size_t min(size_t a, size_t b)
 {
     return a < b ? a : b;
 }
-
-
-
 int fs_write(int fd, void *buf, size_t count)
 {
-	/* TODO: Phase 4 */
-    if (super.signature[0] == '\0' || 
-                            fd < 0 || 
-                            fd >= FS_OPEN_MAX_COUNT || 
-                            filed[fd].file_index == ERROR || 
-                            buf == NULL) 
+    if (super->signature[0] == '\0' || 
+        fd < 0 || 
+        fd >= FS_OPEN_MAX_COUNT || 
+        filed[fd].filename[0] == '\0' ||  // Check if the file descriptor is valid
+        buf == NULL) 
     {
         return ERROR;
     }
+
     int file_idx = filed[fd].file_index;
     size_t offset = filed[fd].offset;
     uint16_t block_index = data_block_index(file_idx, offset);
@@ -401,30 +406,25 @@ int fs_write(int fd, void *buf, size_t count)
 
         if (current_block == FAT_EOC) 
         {
-          
             current_block = allocate_block();
             if (current_block == FAT_EOC) 
             {
-                
-                break;
+                break;  // Exit loop if unable to allocate block
             }
-            fat[block_index] = current_block;
+            fat[block_index] = current_block;  // Update FAT
             fat[current_block] = FAT_EOC;
         }
 
-      
         if (block_read(current_block, block_buffer) == ERROR) 
         {
-            return ERROR;
+            return ERROR;  // Return error if unable to read block
         }
 
-    
         memcpy(block_buffer + block_offset, buf + bytes_written, bytes_to_write);
 
-      
         if (block_write(current_block, block_buffer) == ERROR) 
         {
-            return ERROR;
+            return ERROR;  // Return error if unable to write block
         }
 
         bytes_written += bytes_to_write;
@@ -432,10 +432,9 @@ int fs_write(int fd, void *buf, size_t count)
         block_index = fat[block_index];
     }
 
-   
     if (offset > rootDir[file_idx].size_of_file) 
     {
-        rootDir[file_idx].size_of_file = offset;
+        rootDir[file_idx].size_of_file = offset;  // Update file size if necessary
     }
 
     return bytes_written;
@@ -445,7 +444,7 @@ int fs_read(int fd, void *buf, size_t count)
 {
     if (fd < 0 || 
 		fd >= FS_OPEN_MAX_COUNT || 
-		filed[fd].file_index == ERROR ||  
+		filed[fd].filename[0] == '\0' ||  
 		block_disk_count() == ERROR ||
 		buf == NULL )
     {
