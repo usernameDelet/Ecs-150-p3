@@ -443,13 +443,19 @@ int fs_write(int fd, void *buf, size_t count)
 
 int fs_read(int fd, void *buf, size_t count)
 {
-    if (fd < 0 || 
-		fd >= FS_OPEN_MAX_COUNT || 
-		filed[fd].file_index == ERROR ||  
-		block_disk_count() == ERROR ||
-		buf == NULL )
+    // Check for invalid file descriptor
+    if (fd < 0 || fd >= FS_OPEN_MAX_COUNT || filed[fd].filename[0] == '\0' || block_disk_count() == ERROR || buf == NULL)
     {
         return ERROR;
+    }
+
+    // Get the file size
+    size_t file_size = rootDir[filed[fd].file_index].size_of_file;
+
+    // Check if there is nothing to read
+    if (filed[fd].offset >= file_size)
+    {
+        return 0;
     }
 
     // Calculate the block index and offset within the block
@@ -457,25 +463,26 @@ int fs_read(int fd, void *buf, size_t count)
     uint16_t block_offset = filed[fd].offset % BLOCK_SIZE;
 
     // Read data from the file
-    while (count > 0 && (uint32_t)filed[fd].offset < rootDir[filed[fd].file_index].size_of_file)
+    size_t bytes_read = 0;
+    while (count > 0 && (uint32_t)filed[fd].offset < file_size)
     {
         // Read the block from disk
         char block[BLOCK_SIZE];
-        if (block_read(fat[rootDir[filed[fd].file_index].index_of_first + block_index], block) == ERROR)
+        uint16_t block_to_read = fat[rootDir[filed[fd].file_index].index_of_first + block_index];
+
+        // Check for FAT_EOC and read the block
+        if (block_to_read == FAT_EOC || block_read(block_to_read, block) == ERROR)
         {
-            return ERROR;
+            return ERROR; // Unable to read the block
         }
 
         // Calculate the number of bytes to read in the current block
-        size_t bytes_to_read;
-        if (count < (size_t)(BLOCK_SIZE - block_offset))
-        {
-            bytes_to_read = count;
-        }
-        else
+        size_t bytes_to_read = count;
+        if (bytes_to_read > (size_t)(BLOCK_SIZE - block_offset))
         {
             bytes_to_read = BLOCK_SIZE - block_offset;
         }
+
         // Copy data from the block
         memcpy(buf, block + block_offset, bytes_to_read);
 
@@ -483,11 +490,13 @@ int fs_read(int fd, void *buf, size_t count)
         filed[fd].offset += bytes_to_read;
         buf += bytes_to_read;
         count -= bytes_to_read;
+        bytes_read += bytes_to_read;
 
         // Move to the next block
         ++block_index;
         block_offset = 0;
     }
 
-    return SUCCE;
+    // Return the number of bytes actually read
+    return bytes_read;
 }
