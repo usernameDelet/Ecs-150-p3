@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -11,7 +10,8 @@
 #define ERROR -1
 #define SUCCE 0
 #define FAT_EOC 0xFFFF
-
+int add_data_block(int);
+int allocate_data_block(void);
 /* TODO: Phase 1 */
 struct superblock 
 {
@@ -114,7 +114,7 @@ int fs_info(void)
 	int free_fat = 0;
 	int free_rd = 0;
 	if(super == NULL){
-		//perror("no virtual disk opened");
+		
 		return -1;
 	}
 	printf("%s \n", "FS Info:");
@@ -151,7 +151,7 @@ int fs_create(const char *filename)
     {
         if (strcmp(rootDir[i].filename, filename) == 0) 
         {
-            return ERROR; // File already exists
+            return ERROR; 
         }
     }
     int empty_entry = ERROR;
@@ -165,7 +165,7 @@ int fs_create(const char *filename)
     }
     if (empty_entry == ERROR) 
     {
-        return ERROR; // No empty entry found in root directory
+        return ERROR; 
     }
 
    
@@ -338,151 +338,137 @@ int fs_lseek(int fd, size_t offset)
     return SUCCE;
 }
 
-
-
-
-uint16_t data_block_index(int file_index, size_t offset) 
-{
-    uint16_t block_index = rootDir[file_index].index_of_first;
-    while (offset >= BLOCK_SIZE && block_index != FAT_EOC) 
-    {
-        block_index = fat[block_index];
-        offset -= BLOCK_SIZE;
+int fs_write(int fd, void *buf, size_t count) {
+    if (super == NULL) {
+        
+        return ERROR;
     }
-    return block_index;
-}
-
-uint16_t allocate_block() {
-    for (uint16_t i = super->data_block_start_index; i < super->amount_data_blocks; i++) 
-    {
-        if (fat[i] == 0) 
-        {
-            return i;
-        }
+    if (fd > FS_OPEN_MAX_COUNT - 1 || filed[fd].filename[0] == '\0') {
+       
+        return ERROR;
     }
-    return FAT_EOC;  
-}
-
-size_t min(size_t a, size_t b) 
-{
-    return a < b ? a : b;
-}
-int fs_write(int fd, void *buf, size_t count)
-{
-    if (super->signature[0] == '\0' || 
-        fd < 0 || 
-        fd >= FS_OPEN_MAX_COUNT || 
-        filed[fd].filename[0] == '\0' ||  // Check if the file descriptor is valid
-        buf == NULL) 
-    {
+    if (buf == NULL) {
         return ERROR;
     }
 
-    int file_idx = filed[fd].file_index;
-    size_t offset = filed[fd].offset;
-    uint16_t block_index = data_block_index(file_idx, offset);
+    int rootdir_index = 0;
+    for (int i = 0; i < FS_FILE_MAX_COUNT; i++) {
+        if (!strcmp(rootDir[i].filename, filed[fd].filename)) {
+            rootdir_index = i;
+            break;
+        }
+    }
 
-    size_t bytes_written = 0;
-
-    while (bytes_written < count) 
-    {
-        uint16_t current_block = block_index;
-        int block_offset = offset % BLOCK_SIZE;
-        int bytes_to_write = min(count - bytes_written, BLOCK_SIZE - block_offset);
-        uint8_t block_buffer[BLOCK_SIZE];
-
-        if (current_block == FAT_EOC) 
-        {
-            current_block = allocate_block();
-            if (current_block == FAT_EOC) 
-            {
-                break;  // Exit loop if unable to allocate block
+    int amount_written = 0; 
+    while (count > 0) {
+        int current_block = offset_to_block(fd, filed[fd].offset);
+        if (current_block == FAT_EOC) {
+            int new_block = allocate_data_block();
+            if (new_block == ERROR) {
+                return ERROR;
             }
-            fat[block_index] = current_block;  // Update FAT
-            fat[current_block] = FAT_EOC;
+            rootDir[rootdir_index].size_of_file += BLOCK_SIZE;
+            current_block = new_block;
         }
 
-        if (block_read(current_block, block_buffer) == ERROR) 
-        {
-            return ERROR;  // Return error if unable to read block
-        }
+        char dirty_buf[BLOCK_SIZE];
+        size_t block_offset = filed[fd].offset % BLOCK_SIZE; 
+        size_t amount_to_write = (count < BLOCK_SIZE - block_offset) ? count : (BLOCK_SIZE - block_offset); 
 
-        memcpy(block_buffer + block_offset, buf + bytes_written, bytes_to_write);
+        block_read(current_block, dirty_buf);
+        memcpy(dirty_buf + block_offset, buf, amount_to_write);
+        block_write(current_block, dirty_buf);
 
-        if (block_write(current_block, block_buffer) == ERROR) 
-        {
-            return ERROR;  // Return error if unable to write block
-        }
-
-        bytes_written += bytes_to_write;
-        offset += bytes_to_write;
-        block_index = fat[block_index];
+        filed[fd].offset += amount_to_write;
+        count -= amount_to_write;
+        buf += amount_to_write;
+        amount_written += amount_to_write; 
     }
-
-    if (offset > rootDir[file_idx].size_of_file) 
-    {
-        rootDir[file_idx].size_of_file = offset;  // Update file size if necessary
-    }
-
-    return bytes_written;
+    return amount_written; 
 }
 
-int fs_read(int fd, void *buf, size_t count)
-{
-    // Check for invalid file descriptor
-    if (fd < 0 || fd >= FS_OPEN_MAX_COUNT || filed[fd].filename[0] == '\0' || block_disk_count() == ERROR || buf == NULL)
-    {
+int fs_read(int fd, void *buf, size_t count) {
+  
+    if (fd < 0 || fd >= FS_OPEN_MAX_COUNT || filed[fd].filename[0] == '\0' || block_disk_count() == ERROR || buf == NULL) {
         return ERROR;
     }
 
-    // Get the file size
+  
     size_t file_size = rootDir[filed[fd].file_index].size_of_file;
 
-    // Check if there is nothing to read
-    if (filed[fd].offset >= file_size)
-    {
+    size_t bytes_remaining = file_size - filed[fd].offset;
+
+  
+    if (bytes_remaining <= 0) {
         return 0;
     }
 
-    // Calculate the block index and offset within the block
+   
+    if (count > bytes_remaining) {
+        count = bytes_remaining;
+    }
+
+  
     uint16_t block_index = filed[fd].offset / BLOCK_SIZE;
     uint16_t block_offset = filed[fd].offset % BLOCK_SIZE;
 
-    // Read data from the file
+  
     size_t bytes_read = 0;
-    while (count > 0 && (uint32_t)filed[fd].offset < file_size)
-    {
-        // Read the block from disk
+    while (count > 0 && (uint32_t)filed[fd].offset < file_size) {
+      
         char block[BLOCK_SIZE];
         uint16_t block_to_read = fat[rootDir[filed[fd].file_index].index_of_first + block_index];
 
-        // Check for FAT_EOC and read the block
-        if (block_to_read == FAT_EOC || block_read(block_to_read, block) == ERROR)
-        {
-            return ERROR; // Unable to read the block
+  
+        if (block_to_read == FAT_EOC || block_read(block_to_read, block) == ERROR) {
+            return ERROR; 
         }
 
-        // Calculate the number of bytes to read in the current block
-        size_t bytes_to_read = count;
-        if (bytes_to_read > (size_t)(BLOCK_SIZE - block_offset))
-        {
-            bytes_to_read = BLOCK_SIZE - block_offset;
+        size_t bytes_to_read = BLOCK_SIZE - block_offset;
+        if (bytes_to_read > count) {
+            bytes_to_read = count;
         }
 
-        // Copy data from the block
+       
         memcpy(buf, block + block_offset, bytes_to_read);
 
-        // Update file offset and counters
         filed[fd].offset += bytes_to_read;
         buf += bytes_to_read;
         count -= bytes_to_read;
         bytes_read += bytes_to_read;
 
-        // Move to the next block
+       
         ++block_index;
         block_offset = 0;
     }
 
-    // Return the number of bytes actually read
+
     return bytes_read;
+}
+
+
+
+int offset_to_block(int fd, size_t offset) {
+    uint16_t fat_looper = filed[fd].file_index;
+    size_t block_number = offset / BLOCK_SIZE;
+
+    for (size_t i = 0; i < block_number; i++) {
+        if (fat_looper == FAT_EOC) return FAT_EOC;
+        fat_looper = fat[fat_looper];
+    }
+
+    return fat_looper + 1 + 1 + super->num_blocks_fat;
+}
+
+
+
+
+int allocate_data_block(void) {
+    for (int i = 0; i <super->amount_data_blocks; i++) {
+        if (fat[i] == 0) { 
+            fat[i] = FAT_EOC; 
+            return i; 
+        }
+    }
+    return ERROR; 
 }
