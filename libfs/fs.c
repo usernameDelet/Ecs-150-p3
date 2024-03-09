@@ -116,41 +116,36 @@ int fs_umount(void)
 
 int fs_info(void)
 {
-	if(block_disk_count() == ERROR)
-    {
-        return ERROR;
-    }
-
-	printf("FS Info:\n");
-    printf("total_blk_count=%u\n",super->total_blocks);
+	int free_fat = 0;
+	int free_rd = 0;
+	if(super == NULL){
+		//perror("no virtual disk opened");
+		return ERROR;
+	}
+	printf("%s \n", "FS Info:");
+	printf("total_blk_count=%u\n",super->total_blocks);
     printf("fat_blk_count=%u\n", super->num_blocks_fat);
     printf("rdir_blk=%u\n", super->root_dir_index);
     printf("data_blk=%u\n", super->data_block_start_index);
     printf("data_blk_count=%u\n", super->amount_data_blocks);
 
-    int fat_free_blocks = 0;
-    for (int i = 0; i < super->amount_data_blocks; i++) 
-    {
-        if (fat[i] == 0) 
-        {
-            fat_free_blocks++;
-        }
-    }
-    printf("fat_free_ratio=%d/%u\n", fat_free_blocks, super->amount_data_blocks);
+	
+	for(int i=0; i<super->amount_data_blocks; i++){
+		if(fat[i] == 0){
+			free_fat++;
+		}
+	}
+	printf("fat_free_ratio=%d/%d\n", free_fat, super->amount_data_blocks);
 
-    int rdirCount = 0;
-    for(int i = 0; i < FS_FILE_MAX_COUNT; i++)
-    {
-        if(rootDir[i].filename[0] == '\0')
-        {
-             rdirCount++;
-        }
-    }
-    printf("rdir_free_ratio=%d/%d\n", rdirCount, FS_FILE_MAX_COUNT);
-    
+	for(int i=0; i<FS_FILE_MAX_COUNT; i++){
+		if(rootDir[i].filename[0] == '\0'){
+			free_rd++;
+		}
+	}
+	printf("rdir_free_ratio=%d/%d\n", free_rd, FS_FILE_MAX_COUNT);
+
 	return SUCCE;
 }
-
 int fs_create(const char *filename)
 {
 	
