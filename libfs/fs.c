@@ -91,9 +91,13 @@ int fs_mount(const char *diskname)
 }
 
 
+
+
 int fs_umount(void)
 {
-    if(block_disk_count() == ERROR)
+	
+
+	 if(block_disk_count() == ERROR)
 	{
 		return ERROR;
 	}
@@ -105,13 +109,14 @@ int fs_umount(void)
     
 	return SUCCE;
 }
+
 int fs_info(void)
 {
 	int free_fat = 0;
 	int free_rd = 0;
 	if(super == NULL){
 		//perror("no virtual disk opened");
-		return ERROR;
+		return -1;
 	}
 	printf("%s \n", "FS Info:");
 	printf("total_blk_count=%u\n",super->total_blocks);
