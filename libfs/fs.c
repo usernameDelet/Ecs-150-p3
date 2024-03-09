@@ -144,7 +144,7 @@ int fs_info(void)
     {
         if(rootDir[i].filename[0] == '\0')
         {
-            rdirCount = rdirCount + 1;
+             rdirCount++;
         }
     }
     printf("rdir_free_ratio=%d/%d\n", rdirCount, FS_FILE_MAX_COUNT);
