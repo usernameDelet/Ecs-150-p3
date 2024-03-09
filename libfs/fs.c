@@ -110,7 +110,6 @@ int fs_umount(void)
         return ERROR;
     }
 
-    free(super);
     free(fat);
     return SUCCE;
 }
