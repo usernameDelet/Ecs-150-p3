@@ -144,48 +144,46 @@ int fs_info(void)
 }
 int fs_create(const char *filename)
 {
-	
-	if(filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
-	{
-        printf("he 1");
-		return ERROR;
-	}
-	for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
-	{
+    if(filename == NULL || strlen(filename) >= FS_FILENAME_LEN)
+    {
+        return ERROR;
+    }
+    for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
+    {
         if (strcmp(rootDir[i].filename, filename) == 0) 
-		{
-            printf("he 2");
-            return ERROR; 
+        {
+            return ERROR; // File already exists
         }
     }
-	int empty_entry = ERROR;
+    int empty_entry = ERROR;
     for (int i = 0; i < FS_FILE_MAX_COUNT; i++) 
-	{
+    {
         if (strcmp(rootDir[i].filename, "") == 0) 
-		{
+        {
             empty_entry = i;
             break;
         }
     }
-	if (empty_entry == ERROR) 
-	{
-        printf("he 4");
-        return ERROR;
+    if (empty_entry == ERROR) 
+    {
+        return ERROR; // No empty entry found in root directory
     }
 
-	memset(rootDir[empty_entry].filename, 0, FS_FILENAME_LEN); // Clear filename buffer
+   
+    memset(rootDir[empty_entry].filename, 0, FS_FILENAME_LEN); 
     strncpy(rootDir[empty_entry].filename, filename, FS_FILENAME_LEN - 1);
     rootDir[empty_entry].size_of_file = 0; 
-    rootDir[empty_entry].index_of_first = FAT_EOC;
+    rootDir[empty_entry].index_of_first = FAT_EOC; 
+
 
     if (block_write(super->root_dir_index, rootDir) == ERROR)
     {
-        return ERROR;
+        return ERROR; 
     }
-    printf("he 3");
-	return SUCCE;
 
+    return SUCCE; 
 }
+
 
 int fs_delete(const char *filename)
 {
