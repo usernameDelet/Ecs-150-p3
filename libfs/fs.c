@@ -137,7 +137,6 @@ int fs_info(void)
 			free_rd++;
 		}
 	}
-	free_rd = FS_FILE_MAX_COUNT - free_rd;
 	printf("rdir_free_ratio=%d/%d\n", free_rd, FS_FILE_MAX_COUNT);
 
 	return SUCCE;
