@@ -93,26 +93,20 @@ int fs_mount(const char *diskname)
 
 int fs_umount(void)
 {
-	
-	fat = malloc(super->num_blocks_fat * BLOCK_SIZE);
+    if(super == NULL){
+        return ERROR;
+    }
+    for(int i = 0; i < FS_OPEN_MAX_COUNT; i++){
+        if(filed[i].filename[0] != '\0'){
+            return ERROR;
+        }
+    }
 
-	if(super == NULL){
-		return ERROR;
-	}
-	for(int i=0; i<FS_OPEN_MAX_COUNT; i++){
-		if(filed[i].filename[0] != '\0'){
-			
-			return ERROR;
-		}
-	}
-
-
-	free(super);
-	free(rootDir);
-	free(fat);
-	free(filed);
-	return SUCCE;
-
+    free(super);
+    free(rootDir);
+    free(fat);
+    free(filed);
+    return SUCCE;
 }
 
 int fs_info(void)
