@@ -93,15 +93,7 @@ int fs_mount(const char *diskname)
 
 int fs_umount(void)
 {
-    if(super == NULL){
-        return ERROR;
-    }
-    for(int i = 0; i < FS_OPEN_MAX_COUNT; i++){
-        if(filed[i].filename[0] != '\0'){
-            return ERROR;
-        }
-    }
-	if(block_disk_count() == ERROR)
+    if(block_disk_count() == ERROR)
 	{
 		return ERROR;
 	}
@@ -109,11 +101,10 @@ int fs_umount(void)
 	{
         return ERROR;
     }
-
     free(fat);
-    return SUCCE;
+    
+	return SUCCE;
 }
-
 int fs_info(void)
 {
 	int free_fat = 0;
